@@ -6,11 +6,11 @@
 <meta name="theme-color" content="#F0B90B">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Beecoin Pro">
+<meta name="apple-mobile-web-app-title" content="AquaTrade">
 <meta name="description" content="Social trading game sulle stock idriche — gioca online con altri trader">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
-<title>🐝 Beecoin Pro</title>
+<title>🐝 AquaTrade</title>
 <style>
 /* ═══════════════════════════════════════════════════════
    RESET & VARIABILI
@@ -331,8 +331,8 @@ canvas{display:block}
 <!-- ═══════════ SPLASH ═══════════ -->
 <div id="screen-splash" class="screen active">
   <div class="splash-logo">🐝</div>
-  <div class="splash-title">BEECOIN PRO</div>
-  <div class="splash-sub">WATER TRADING GAME</div>
+  <div class="splash-title">AQUATRADE</div>
+  <div class="splash-sub">WATER STOCK TRADING</div>
   <div class="splash-bar-bg"><div class="splash-bar"></div></div>
 </div>
 
@@ -340,7 +340,7 @@ canvas{display:block}
 <div id="screen-onboard" class="screen">
   <div class="onboard-card">
     <div class="onboard-icon">🐝</div>
-    <div class="onboard-title">Benvenuto in Beecoin Pro!</div>
+    <div class="onboard-title">Benvenuto in AquaTrade!</div>
     <div class="onboard-desc">Scegli il tuo avatar e il tuo nome per iniziare a fare trading online contro altri giocatori.</div>
 
     <div>
@@ -371,7 +371,7 @@ canvas{display:block}
 <!-- ═══════════ HOME ═══════════ -->
 <div id="screen-home" class="screen">
   <div class="home-header">
-    <div class="home-logo">🐝 BEECOIN PRO</div>
+    <div class="home-logo">🐝 AQUATRADE</div>
     <div style="display:flex;align-items:center;gap:8px">
       <div class="home-online"><div class="dot-live"></div><span id="online-count">0 online</span></div>
       <div class="home-wallet" id="home-wallet">🐝 50,000</div>
@@ -641,7 +641,7 @@ canvas{display:block}
 
 <script>
 // ═══════════════════════════════════════════════════════════
-//  BEECOIN PRO — PWA CLIENT
+//  AQUATRADE — PWA CLIENT
 // ═══════════════════════════════════════════════════════════
 
 // ── Configura URL server ─────────────────────────────────
@@ -792,10 +792,24 @@ function connectWS() {
 
   G.ws.onclose = () => {
     console.log('[WS] Disconnected — reconnecting in 3s...');
+    // Se non siamo ancora nella home, non bloccare l'UI
+    if (G.screen === 'splash') {
+      bootApp._done = false;
+      bootApp();
+    }
     G.reconnectTimer = setTimeout(connectWS, 3000);
   };
 
-  G.ws.onerror = err => console.error('[WS] Error:', err);
+  G.ws.onerror = (err) => {
+    console.warn('[WS] Connection error — running in offline mode');
+    // Avvia comunque il gioco in modalità locale
+    if (G.screen === 'splash') {
+      bootApp._done = false;
+      bootApp();
+    }
+  };
+
+
 }
 
 function wsend(msg) {
@@ -1455,29 +1469,57 @@ function saveProfile(){
 }
 
 // ── BOOT ─────────────────────────────────────────────────
-window.addEventListener('load', () => {
-  // Splash → dopo 1.8s vai a onboarding o home
+// ── BOOT principale ──────────────────────────────────────
+function bootApp() {
+  if (bootApp._done) return;
+  bootApp._done = true;
+
+  const onboarded = localStorage.getItem('bc_onboarded');
+
+  // Mostra splash per 2s poi avvia
   setTimeout(() => {
-    const onboarded = localStorage.getItem('bc_onboarded');
     if (onboarded) {
       G.name   = localStorage.getItem('bc_name')   || G.name;
       G.avatar = localStorage.getItem('bc_avatar') || G.avatar;
       showScreen('home');
       updateHomeProfile();
     } else {
-      $('name-input').value = 'Trader'+Math.floor(Math.random()*9000+1000);
+      const ni = $('name-input');
+      if (ni) ni.value = 'Trader'+Math.floor(Math.random()*9000+1000);
       showScreen('onboard');
     }
+
     // Connetti WebSocket
     connectWS();
-    // Init chart
+
+    // Init chart canvas
     initChart();
     renderTradeChips();
     updateTradeSummary();
-    // Join public lobby
-    setTimeout(() => { if(G.ws?.readyState===WebSocket.OPEN) wsend({type:'join_public'}); }, 1500);
-  }, 2000);
-});
+
+    // Join public lobby appena WS è pronto
+    let joinAttempts = 0;
+    const tryJoin = () => {
+      joinAttempts++;
+      if (G.ws && G.ws.readyState === WebSocket.OPEN) {
+        wsend({type:'join_public'});
+      } else if (joinAttempts < 10) {
+        setTimeout(tryJoin, 800);
+      }
+    };
+    setTimeout(tryJoin, 1000);
+
+  }, 1800);
+}
+
+// Triggera sia su DOMContentLoaded che su load (doppia sicurezza)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootApp);
+} else {
+  // DOM già pronto
+  bootApp();
+}
+window.addEventListener('load', bootApp);
 
 // Install PWA prompt
 let deferredPrompt;
@@ -1492,7 +1534,7 @@ window.addEventListener('beforeinstallprompt', e => {
   }, 5000);
 });
 window.addEventListener('appinstalled', () => {
-  toast('🎉 Beecoin Pro installata!','var(--green)');
+  toast('🎉 AquaTrade installata!','var(--green)');
   deferredPrompt = null;
 });
 </script>

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-//  BEECOIN PRO — Multiplayer WebSocket Server
+//  AQUATRADE PRO — Multiplayer WebSocket Server
 //  Node.js + ws + Express
 //  Deploy su Railway / Render / Fly.io gratuitamente
 // ═══════════════════════════════════════════════════════════
@@ -433,7 +433,7 @@ app.get('/api/leaderboard', (req, res) => {
 
 // ── Start ─────────────────────────────────────────────────
 server.listen(PORT, () => {
-  console.log(`🐝 Beecoin Server running on port ${PORT}`);
+  console.log(`💧 AquaTrade Server running on port ${PORT}`);
   console.log(`   Serve PWA from /public`);
   console.log(`   WebSocket ready`);
 });

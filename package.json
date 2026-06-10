@@ -1,7 +1,7 @@
 {
-  "name": "beecoin-multiplayer-server",
+  "name": "aquatrade-multiplayer-server",
   "version": "1.0.0",
-  "description": "Beecoin Pro — Multiplayer WebSocket Server",
+  "description": "AquaTrade \u2014 Water Stock Trading Game, Multiplayer WebSocket Server",
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
@@ -17,6 +17,11 @@
   "devDependencies": {
     "nodemon": "^3.0.2"
   },
-  "keywords": ["beecoin", "trading", "game", "websocket"],
+  "keywords": [
+    "beecoin",
+    "trading",
+    "game",
+    "websocket"
+  ],
   "license": "MIT"
 }
