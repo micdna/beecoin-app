@@ -792,21 +792,15 @@ function connectWS() {
 
   G.ws.onclose = () => {
     console.log('[WS] Disconnected — reconnecting in 3s...');
-    // Se non siamo ancora nella home, non bloccare l'UI
-    if (G.screen === 'splash') {
-      bootApp._done = false;
-      bootApp();
-    }
+    // Se bloccati sullo splash, forza avvio
+    if (G.screen === 'splash') { avviaGioco(); }
     G.reconnectTimer = setTimeout(connectWS, 3000);
   };
 
   G.ws.onerror = (err) => {
     console.warn('[WS] Connection error — running in offline mode');
-    // Avvia comunque il gioco in modalità locale
-    if (G.screen === 'splash') {
-      bootApp._done = false;
-      bootApp();
-    }
+    // Avvia in modalità offline se bloccati sullo splash
+    if (G.screen === 'splash') { avviaGioco(); }
   };
 
 
@@ -1469,57 +1463,61 @@ function saveProfile(){
 }
 
 // ── BOOT ─────────────────────────────────────────────────
-// ── BOOT principale ──────────────────────────────────────
-function bootApp() {
-  if (bootApp._done) return;
-  bootApp._done = true;
-
+function avviaGioco() {
+  // Legge dati salvati
   const onboarded = localStorage.getItem('bc_onboarded');
-
-  // Mostra splash per 2s poi avvia
-  setTimeout(() => {
-    if (onboarded) {
-      G.name   = localStorage.getItem('bc_name')   || G.name;
-      G.avatar = localStorage.getItem('bc_avatar') || G.avatar;
-      showScreen('home');
-      updateHomeProfile();
-    } else {
-      const ni = $('name-input');
-      if (ni) ni.value = 'Trader'+Math.floor(Math.random()*9000+1000);
-      showScreen('onboard');
+  if (onboarded) {
+    G.name   = localStorage.getItem('bc_name')   || G.name;
+    G.avatar = localStorage.getItem('bc_avatar') || G.avatar;
+    showScreen('home');
+    updateHomeProfile();
+  } else {
+    const ni = $('name-input');
+    if (ni) ni.value = 'Trader' + (Math.random()*9000+1000|0);
+    showScreen('onboard');
+  }
+  // Init
+  initChart();
+  renderTradeChips();
+  updateTradeSummary();
+  // Connetti WS
+  connectWS();
+  // Tenta join lobby ogni 800ms finché WS è aperto
+  let t = 0;
+  const tryJoin = () => {
+    if (G.ws && G.ws.readyState === WebSocket.OPEN) {
+      wsend({ type:'join_public' });
+    } else if (++t < 15) {
+      setTimeout(tryJoin, 800);
     }
-
-    // Connetti WebSocket
-    connectWS();
-
-    // Init chart canvas
-    initChart();
-    renderTradeChips();
-    updateTradeSummary();
-
-    // Join public lobby appena WS è pronto
-    let joinAttempts = 0;
-    const tryJoin = () => {
-      joinAttempts++;
-      if (G.ws && G.ws.readyState === WebSocket.OPEN) {
-        wsend({type:'join_public'});
-      } else if (joinAttempts < 10) {
-        setTimeout(tryJoin, 800);
-      }
-    };
-    setTimeout(tryJoin, 1000);
-
-  }, 1800);
+  };
+  setTimeout(tryJoin, 1200);
 }
 
-// Triggera sia su DOMContentLoaded che su load (doppia sicurezza)
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', bootApp);
+// Splash dura esattamente 2000ms (sincronizzato con la barra CSS 1.8s)
+// Usiamo un flag per non avviare due volte
+let _booted = false;
+function boot() {
+  if (_booted) return;
+  _booted = true;
+  setTimeout(avviaGioco, 2000);
+}
+
+// Triggera in tutti i casi possibili
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  boot(); // DOM già pronto (caso Railway/CDN)
 } else {
-  // DOM già pronto
-  bootApp();
+  document.addEventListener('DOMContentLoaded', boot);
 }
-window.addEventListener('load', bootApp);
+window.addEventListener('load', boot);
+// Fallback assoluto: se dopo 3s siamo ancora sullo splash, partiamo comunque
+setTimeout(() => {
+  if (!_booted) { boot(); }
+  // Se siamo ancora su splash dopo 3.5s, forziamo avviaGioco direttamente
+  setTimeout(() => {
+    if (G.screen === 'splash') avviaGioco();
+  }, 500);
+}, 3000);
 
 // Install PWA prompt
 let deferredPrompt;
