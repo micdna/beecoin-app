@@ -2,1539 +2,1135 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="theme-color" content="#F0B90B">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0ECB81">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="AquaTrade">
-<meta name="description" content="Social trading game sulle stock idriche — gioca online con altri trader">
 <link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="/icons/icon-192.png">
-<title>🐝 AquaTrade</title>
+<title>💧 AquaTrade</title>
 <style>
-/* ═══════════════════════════════════════════════════════
-   RESET & VARIABILI
-═══════════════════════════════════════════════════════ */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 :root{
   --bg0:#0B0E11;--bg1:#131720;--bg2:#1C2333;--bg3:#242D3E;
   --gold:#F0B90B;--green:#0ECB81;--red:#F6465D;
-  --blue:#1677FF;--purple:#7B68EE;--orange:#FF9800;
+  --blue:#1677FF;--purple:#7B68EE;
   --text:#EAECEF;--muted:#848E9C;--dim:#474D57;--border:#2B3347;
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --font: 'Courier New', monospace;
+  --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);
 }
-html,body{
-  background:var(--bg0);color:var(--text);font-family:var(--font);
-  height:100%;overflow:hidden;font-size:13px;
-  padding-top:var(--safe-top);padding-bottom:var(--safe-bottom);
-}
-::-webkit-scrollbar{width:2px}
-::-webkit-scrollbar-thumb{background:var(--dim);border-radius:2px}
-input,button,select{font-family:var(--font);outline:none;-webkit-appearance:none}
-button{cursor:pointer;transition:opacity .15s}
-button:active{opacity:.7}
+html,body{height:100%;background:var(--bg0);color:var(--text);font-family:'Courier New',monospace;overflow:hidden;font-size:13px}
+::-webkit-scrollbar{width:2px}::-webkit-scrollbar-thumb{background:var(--dim);border-radius:2px}
+button,input,select{font-family:inherit;outline:none;-webkit-appearance:none}
+button:active{opacity:.75}
 canvas{display:block}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;padding-top:var(--sat);padding-bottom:var(--sab);overflow:hidden}
 
-/* ═══════════════════════════════════════════════════════
-   LAYOUT APP MOBILE
-═══════════════════════════════════════════════════════ */
-#app{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;position:relative}
+/* ── SCREENS ── */
 .screen{display:none;flex-direction:column;flex:1;overflow:hidden}
-.screen.active{display:flex}
+.screen.on{display:flex}
 
-/* ═══════════════════════════════════════════════════════
-   SPLASH SCREEN
-═══════════════════════════════════════════════════════ */
-#screen-splash{align-items:center;justify-content:center;background:var(--bg0)}
-.splash-logo{font-size:72px;animation:bounce 1s ease infinite alternate}
-.splash-title{font-size:28px;font-weight:700;color:var(--gold);margin:12px 0 4px;letter-spacing:-.5px}
-.splash-sub{font-size:13px;color:var(--muted);letter-spacing:.1em}
-.splash-bar-bg{width:200px;height:3px;background:var(--bg2);border-radius:2px;margin-top:40px;overflow:hidden}
-.splash-bar{height:100%;background:var(--gold);border-radius:2px;animation:loadBar 1.8s ease forwards}
-@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-12px)}}
-@keyframes loadBar{from{width:0}to{width:100%}}
+/* ── SPLASH ── */
+#sc-splash{align-items:center;justify-content:center;gap:12px}
+.splash-logo{font-size:72px;animation:bob 1.2s ease-in-out infinite alternate}
+.splash-name{font-size:28px;font-weight:700;color:var(--green);letter-spacing:-.5px}
+.splash-sub{font-size:12px;color:var(--muted);letter-spacing:.12em}
+.splash-bar-wrap{width:200px;height:3px;background:var(--bg2);border-radius:2px;margin-top:32px;overflow:hidden}
+.splash-bar{height:100%;border-radius:2px;background:var(--green);width:0;transition:width 1.8s ease}
+@keyframes bob{from{transform:translateY(0)}to{transform:translateY(-10px)}}
 
-/* ═══════════════════════════════════════════════════════
-   ONBOARDING
-═══════════════════════════════════════════════════════ */
-#screen-onboard{background:var(--bg0);padding:24px 20px;justify-content:center}
-.onboard-card{background:var(--bg1);border:1px solid var(--border);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:16px}
-.onboard-icon{font-size:48px;text-align:center}
-.onboard-title{font-size:22px;font-weight:700;color:var(--gold);text-align:center}
-.onboard-desc{font-size:13px;color:var(--muted);text-align:center;line-height:1.6}
-.avatar-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-.avatar-btn{font-size:28px;padding:8px;background:var(--bg2);border:2px solid var(--border);border-radius:10px;text-align:center}
-.avatar-btn.sel{border-color:var(--gold);background:rgba(240,185,11,.1)}
-.name-input{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-size:15px;width:100%}
-.name-input:focus{border-color:var(--gold)}
-.btn-primary{background:var(--gold);color:#000;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;width:100%;letter-spacing:.02em}
-.btn-secondary{background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:12px;font-size:14px;width:100%}
+/* ── ONBOARD ── */
+#sc-onboard{padding:20px;justify-content:center;gap:14px}
+.card{background:var(--bg1);border:1px solid var(--border);border-radius:14px;padding:16px}
+.card-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.av-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.av-btn{font-size:26px;padding:8px;background:var(--bg2);border:2px solid var(--border);border-radius:10px;text-align:center}
+.av-btn.on{border-color:var(--green)}
+.inp{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text);font-size:15px}
+.inp:focus{border-color:var(--green)}
+.btn-main{background:var(--green);color:#000;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;width:100%}
+.btn-sec{background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:12px;font-size:14px;width:100%}
 
-/* ═══════════════════════════════════════════════════════
-   HOME / LOBBY
-═══════════════════════════════════════════════════════ */
-#screen-home{background:var(--bg0)}
-.home-header{background:var(--bg1);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.home-logo{font-size:15px;font-weight:700;color:var(--gold)}
-.home-wallet{font-size:13px;font-weight:700;color:var(--gold);background:rgba(240,185,11,.1);border:1px solid rgba(240,185,11,.3);border-radius:8px;padding:5px 10px}
-.home-online{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px}
-.dot-live{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+/* ── HOME ── */
+#sc-home{background:var(--bg0)}
+.topbar{background:var(--bg1);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.topbar-logo{font-size:15px;font-weight:700;color:var(--green)}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.online-pill{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.wallet-pill{background:rgba(14,203,129,.1);border:1px solid rgba(14,203,129,.3);border-radius:8px;padding:5px 10px;cursor:pointer}
+.wallet-val{font-size:13px;font-weight:700;color:var(--green)}
+.scroll{overflow-y:auto;flex:1;padding:14px}
+.scroll::-webkit-scrollbar{width:2px}
+.sec-title{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
 
-.home-scroll{overflow-y:auto;flex:1;padding:16px}
-.section-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+/* Profile card */
+.profile-card{background:var(--bg1);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.profile-av{font-size:32px}
+.profile-name{font-size:15px;font-weight:700}
+.profile-pnl{font-size:11px;color:var(--muted);margin-top:2px}
+.profile-edit{margin-left:auto;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--muted);font-size:12px}
 
-/* Mode cards */
-.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
-.mode-card{background:var(--bg1);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden}
-.mode-card::before{content:'';position:absolute;inset:0;border-radius:14px;opacity:0;transition:opacity .2s}
-.mode-card:active::before{opacity:1}
-.mode-card.gold::before{background:rgba(240,185,11,.08)}
-.mode-card.purple::before{background:rgba(123,104,238,.08)}
-.mode-card.green::before{background:rgba(14,203,129,.08)}
-.mode-card.blue::before{background:rgba(22,119,255,.08)}
-.mode-card-icon{font-size:28px}
-.mode-card-title{font-size:14px;font-weight:700}
-.mode-card-desc{font-size:11px;color:var(--muted);line-height:1.4}
-.mode-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;width:fit-content}
+/* Mode grid */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.mode-card{background:var(--bg1);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:7px;text-align:left}
+.mode-card:active{opacity:.8}
+.mode-icon{font-size:26px}
+.mode-title{font-size:14px;font-weight:700}
+.mode-desc{font-size:11px;color:var(--muted);line-height:1.4}
+.mode-badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;width:fit-content}
 .badge-live{background:rgba(14,203,129,.15);color:var(--green);border:1px solid rgba(14,203,129,.3)}
-.badge-new{background:rgba(240,185,11,.15);color:var(--gold);border:1px solid rgba(240,185,11,.3)}
+.badge-pvp{background:rgba(123,104,238,.15);color:var(--purple);border:1px solid rgba(123,104,238,.3)}
+.badge-join{background:rgba(22,119,255,.15);color:var(--blue);border:1px solid rgba(22,119,255,.3)}
 
-/* Players online list */
-.player-list{display:flex;flex-direction:column;gap:6px;margin-bottom:20px}
-.player-row{background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px}
-.player-av{font-size:22px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border-radius:50%}
-.player-info{flex:1}
-.player-name{font-size:13px;font-weight:600}
-.player-stats{font-size:11px;color:var(--muted)}
-.player-pnl{font-size:13px;font-weight:700}
-
-/* Leaderboard mini */
+/* Leaderboard */
 .lb-row{background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:6px}
-.lb-rank{font-size:16px;width:24px;text-align:center}
+.lb-rank{font-size:16px;width:24px}
+.lb-av{font-size:20px}
 .lb-name{flex:1;font-size:13px;font-weight:600}
-.lb-val{font-size:12px;font-weight:700}
+.lb-pnl{font-size:12px;font-weight:700}
 
-/* ═══════════════════════════════════════════════════════
-   SCHERMATA LOBBY / STANZA
-═══════════════════════════════════════════════════════ */
-#screen-room{background:var(--bg0)}
-.room-header{background:var(--bg1);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
-.back-btn{font-size:20px;background:none;border:none;color:var(--text);padding:4px}
-.room-code-badge{background:rgba(240,185,11,.12);border:1px solid rgba(240,185,11,.4);border-radius:8px;padding:4px 10px;font-size:13px;font-weight:700;color:var(--gold);letter-spacing:.1em}
-.room-mode-badge{font-size:11px;color:var(--purple);background:rgba(123,104,238,.1);border:1px solid rgba(123,104,238,.3);border-radius:6px;padding:2px 8px}
-.room-scroll{overflow-y:auto;flex:1;padding:16px}
-.room-players-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
-.room-player-card{background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;position:relative}
-.room-player-card.host::after{content:'HOST';position:absolute;top:6px;right:6px;font-size:8px;font-weight:700;color:var(--gold);background:rgba(240,185,11,.15);border-radius:4px;padding:1px 5px}
-.room-player-av{font-size:32px;margin-bottom:6px}
-.room-player-name{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.room-player-status{font-size:10px;color:var(--green)}
+/* ── ROOM ── */
+#sc-room{background:var(--bg0)}
+.room-hdr{background:var(--bg1);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.back-btn{background:none;border:none;color:var(--text);font-size:20px;padding:4px}
+.room-code-pill{background:rgba(240,185,11,.1);border:1px solid rgba(240,185,11,.35);border-radius:8px;padding:4px 10px;font-size:13px;font-weight:700;color:var(--gold);letter-spacing:.1em}
+.room-scroll{overflow-y:auto;flex:1;padding:14px}
+.share-box{background:var(--bg1);border:1px solid rgba(240,185,11,.3);border-radius:14px;padding:16px;text-align:center;margin-bottom:14px}
+.share-code{font-size:34px;font-weight:700;color:var(--gold);letter-spacing:.15em;margin:6px 0}
+.share-hint{font-size:11px;color:var(--muted)}
+.copy-btn{background:rgba(240,185,11,.1);border:1px solid rgba(240,185,11,.3);border-radius:8px;padding:8px 16px;color:var(--gold);font-size:12px;font-weight:700;margin-top:10px}
+.room-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.room-p-card{background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;position:relative}
+.room-p-card.host::after{content:'HOST';position:absolute;top:6px;right:6px;font-size:8px;font-weight:700;color:var(--gold);background:rgba(240,185,11,.15);border-radius:4px;padding:1px 5px}
+.room-p-av{font-size:30px;margin-bottom:6px}
+.room-p-name{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .empty-slot{background:var(--bg2);border:1px dashed var(--border);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:11px;display:flex;align-items:center;justify-content:center}
-.room-share-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;text-align:center}
-.room-share-code{font-size:32px;font-weight:700;color:var(--gold);letter-spacing:.15em;margin:6px 0}
-.room-share-hint{font-size:11px;color:var(--muted)}
-.btn-copy-code{background:rgba(240,185,11,.1);border:1px solid rgba(240,185,11,.3);border-radius:8px;padding:8px 16px;color:var(--gold);font-size:12px;font-weight:700;margin-top:10px}
-.room-options{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
-.option-row{display:flex;align-items:center;justify-content:space-between;background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
-.option-label{font-size:13px;font-weight:600}
-.option-sub{font-size:10px;color:var(--muted);margin-top:1px}
-.toggle{width:44px;height:24px;border-radius:12px;background:var(--border);position:relative;border:none;transition:background .2s}
-.toggle.on{background:var(--green)}
-.toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:white;transition:transform .2s}
-.toggle.on::after{transform:translateX(20px)}
-.select-input{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-size:12px}
-.btn-start{background:var(--green);color:#000;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:700;width:100%;margin-top:8px}
+.opt-row{background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.opt-label{font-size:13px;font-weight:600}
+.opt-sub{font-size:10px;color:var(--muted)}
+.sel{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-size:12px}
+.btn-start{background:var(--green);color:#000;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:700;width:100%;margin-top:6px}
 .btn-start:disabled{background:var(--dim);color:var(--muted)}
 
-/* ═══════════════════════════════════════════════════════
-   SCHERMATA TRADING (IN-GAME)
-═══════════════════════════════════════════════════════ */
-#screen-game{background:var(--bg0)}
-.game-topbar{background:var(--bg1);border-bottom:1px solid var(--border);padding:8px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;height:50px}
-.game-wallet{display:flex;flex-direction:column}
-.game-wallet-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-.game-wallet-val{font-size:15px;font-weight:700;color:var(--gold)}
-.game-timer{font-size:14px;font-weight:700;color:var(--text);background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:4px 10px}
-.game-timer.danger{color:var(--red);border-color:var(--red);animation:timerPulse 1s infinite}
-@keyframes timerPulse{0%,100%{opacity:1}50%{opacity:.5}}
-.game-pnl{font-size:14px;font-weight:700;text-align:right}
-.game-pnl-label{font-size:9px;color:var(--muted)}
+/* ── GAME ── */
+#sc-game{background:var(--bg0)}
+.g-topbar{background:var(--bg1);border-bottom:1px solid var(--border);padding:8px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;height:50px}
+.g-wallet-lbl{font-size:9px;color:var(--muted);text-transform:uppercase}
+.g-wallet-val{font-size:15px;font-weight:700;color:var(--green)}
+.g-timer{font-size:14px;font-weight:700;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:4px 10px}
+.g-timer.danger{color:var(--red);border-color:var(--red);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.g-pnl-lbl{font-size:9px;color:var(--muted);text-align:right}
+.g-pnl-val{font-size:15px;font-weight:700;text-align:right}
+.g-tabs{display:flex;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0}
+.g-tab{flex:1;padding:9px 4px;text-align:center;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.g-tab.on{color:var(--green);border-bottom-color:var(--green)}
+.g-tab-ic{font-size:16px}
+.g-content{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.g-panel{display:none;flex-direction:column;flex:1;overflow:hidden}
+.g-panel.on{display:flex}
 
-/* Tabs navigazione in-game */
-.game-tabs{display:flex;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0}
-.game-tab{flex:1;padding:10px 4px;text-align:center;font-size:10px;color:var(--muted);border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none;display:flex;flex-direction:column;align-items:center;gap:2px}
-.game-tab.on{color:var(--gold);border-bottom-color:var(--gold)}
-.game-tab-icon{font-size:16px}
-.game-content{flex:1;overflow:hidden;display:flex;flex-direction:column}
-.game-panel{display:none;flex-direction:column;flex:1;overflow:hidden}
-.game-panel.active{display:flex}
-
-/* Chart panel */
-.chart-header{padding:10px 12px;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0}
-.chart-ticker-row{display:flex;align-items:baseline;gap:8px}
-.chart-sym{font-size:18px;font-weight:700;color:var(--gold)}
+/* Chart */
+.chart-hdr{padding:10px 12px;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0}
+.chart-row1{display:flex;align-items:baseline;gap:8px}
+.chart-sym{font-size:18px;font-weight:700;color:var(--green)}
 .chart-price{font-size:22px;font-weight:700}
 .chart-chg{font-size:12px;font-weight:600;padding:2px 7px;border-radius:6px}
 .chart-stats{display:flex;gap:12px;margin-top:4px}
-.chart-stat{display:flex;flex-direction:column}
-.chart-stat-l{font-size:9px;color:var(--muted)}
-.chart-stat-v{font-size:11px;font-weight:600}
-#chart-canvas{width:100%;flex:1}
-.chart-indicators{padding:4px 12px;background:var(--bg1);border-top:1px solid var(--border);display:flex;gap:12px;font-size:10px;flex-shrink:0}
-.ind-item{display:flex;gap:4px}
+.cs{display:flex;flex-direction:column}
+.cs-l{font-size:9px;color:var(--muted)}
+.cs-v{font-size:11px;font-weight:600}
+.chart-inds{padding:4px 12px;background:var(--bg1);border-top:1px solid var(--border);display:flex;gap:12px;flex-shrink:0}
+.ind{display:flex;gap:4px;font-size:10px;align-items:center}
 .ind-l{color:var(--muted)}
 
-/* Watchlist panel */
+/* Market */
 .wl-search{margin:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:13px;width:calc(100% - 24px)}
-.wl-scroll{overflow-y:auto;flex:1;padding:0 12px 12px}
+.wl-list{overflow-y:auto;flex:1;padding:0 12px 12px}
 .wl-item{background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
-.wl-item.sel{border-color:var(--gold);background:rgba(240,185,11,.04)}
-.wl-color{width:4px;height:40px;border-radius:2px;flex-shrink:0}
+.wl-item.on{border-color:var(--green);background:rgba(14,203,129,.04)}
+.wl-bar{width:4px;height:40px;border-radius:2px;flex-shrink:0}
 .wl-info{flex:1}
 .wl-sym{font-size:14px;font-weight:700}
 .wl-name{font-size:11px;color:var(--muted);margin-top:1px}
-.wl-right{text-align:right}
+.wl-r{text-align:right}
 .wl-price{font-size:15px;font-weight:700}
 .wl-chg{font-size:11px;font-weight:600;margin-top:1px}
-.wl-spark{display:flex;align-items:flex-end;gap:2px;height:20px;margin-top:5px}
+.wl-spark{display:flex;align-items:flex-end;gap:2px;height:18px;margin-top:5px}
 
-/* Trade panel */
-.trade-scroll{overflow-y:auto;flex:1;padding:12px}
-.trade-stock-row{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px}
-.trade-stock-chip{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:700;flex-shrink:0;white-space:nowrap}
-.trade-stock-chip.sel{border-color:var(--gold);color:var(--gold);background:rgba(240,185,11,.08)}
-.trade-card{background:var(--bg1);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px}
-.trade-card-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+/* Trade */
+.trade-scr{overflow-y:auto;flex:1;padding:12px}
+.chips{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px}
+.chip{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:700;flex-shrink:0;white-space:nowrap}
+.chip.on{border-color:var(--green);color:var(--green);background:rgba(14,203,129,.08)}
+.t-card{background:var(--bg1);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px}
+.t-card-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
 .side-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 .side-btn{padding:12px;border-radius:10px;font-size:14px;font-weight:700;border:1px solid}
-.side-btn.buy-on{background:rgba(14,203,129,.15);border-color:var(--green);color:var(--green)}
-.side-btn.sell-on{background:rgba(246,70,93,.15);border-color:var(--red);color:var(--red)}
-.side-btn.buy-off{background:none;border-color:var(--border);color:var(--muted)}
-.side-btn.sell-off{background:none;border-color:var(--border);color:var(--muted)}
-.trade-label{font-size:11px;color:var(--muted);margin-bottom:4px}
-.trade-input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;color:var(--text);font-size:15px;margin-bottom:10px}
-.trade-input:focus{border-color:var(--gold)}
+.sb-buy-on {background:rgba(14,203,129,.15);border-color:var(--green);color:var(--green)}
+.sb-sell-on{background:rgba(246,70,93,.15);border-color:var(--red);color:var(--red)}
+.sb-off    {background:none;border-color:var(--border);color:var(--muted)}
+.t-lbl{font-size:11px;color:var(--muted);margin-bottom:4px}
+.t-inp{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;color:var(--text);font-size:15px;margin-bottom:10px}
+.t-inp:focus{border-color:var(--green)}
 .pct-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
-.pct-btn{padding:8px 4px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:12px}
-.pct-btn:active{background:var(--bg3);color:var(--text)}
-.trade-summary{background:var(--bg2);border-radius:10px;padding:10px 12px;margin-bottom:12px}
-.trade-summ-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid var(--border)}
-.trade-summ-row:last-child{border-bottom:none;font-weight:700}
-.exec-btn-buy{width:100%;padding:15px;background:var(--green);color:#000;border:none;border-radius:12px;font-size:16px;font-weight:700;letter-spacing:.02em}
-.exec-btn-sell{width:100%;padding:15px;background:var(--red);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;letter-spacing:.02em}
+.pct-btn{padding:8px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:12px}
+.t-summ{background:var(--bg2);border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.t-summ-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid var(--border)}
+.t-summ-row:last-child{border:none;font-weight:700}
+.exec-buy {width:100%;padding:15px;background:var(--green);color:#000;border:none;border-radius:12px;font-size:16px;font-weight:700}
+.exec-sell{width:100%;padding:15px;background:var(--red);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700}
 
 /* Positions */
 .pos-list{overflow-y:auto;flex:1;padding:12px}
 .pos-card{background:var(--bg1);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
-.pos-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.pos-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
 .pos-sym{font-size:16px;font-weight:700}
 .pos-side{font-size:10px;color:var(--green);font-weight:700;margin-left:6px}
 .pos-pnl{font-size:16px;font-weight:700}
-.pos-pct{font-size:11px}
-.pos-detail{font-size:11px;color:var(--muted);margin-bottom:8px}
+.pos-pct{font-size:11px;text-align:right}
+.pos-det{font-size:11px;color:var(--muted);margin-bottom:8px}
 .pos-bar{height:3px;background:var(--border);border-radius:2px;margin-bottom:10px;overflow:hidden}
 .pos-bar-fill{height:100%;border-radius:2px;transition:width .3s}
 .close-btn{width:100%;padding:10px;background:rgba(246,70,93,.1);border:1px solid rgba(246,70,93,.4);color:var(--red);border-radius:10px;font-size:13px;font-weight:700}
 
-/* Players panel */
-.players-scroll{overflow-y:auto;flex:1;padding:12px}
-.ingame-player{background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
-.ingame-rank{font-size:16px;width:24px;text-align:center}
-.ingame-av{font-size:24px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border-radius:50%}
-.ingame-info{flex:1}
-.ingame-name{font-size:13px;font-weight:700}
-.ingame-sub{font-size:10px;color:var(--muted);margin-top:1px}
-.ingame-val{text-align:right}
-.ingame-total{font-size:14px;font-weight:700}
-.ingame-pnl{font-size:11px}
+/* Rank */
+.rank-list{overflow-y:auto;flex:1;padding:12px}
+.rank-row{background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.rank-pos{font-size:16px;width:24px}
+.rank-av{font-size:24px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border-radius:50%}
+.rank-info{flex:1}
+.rank-name{font-size:13px;font-weight:700}
+.rank-sub{font-size:10px;color:var(--muted);margin-top:1px}
+.rank-total{font-size:14px;font-weight:700;text-align:right}
 
-/* Chat in-game */
+/* Chat */
 .chat-msgs{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
-.chat-msg-sys{text-align:center;font-size:10px;color:var(--muted);background:var(--bg2);border-radius:6px;padding:4px 10px;margin:2px auto}
-.chat-bubble{max-width:80%;padding:8px 11px;border-radius:12px;font-size:13px;line-height:1.4;word-break:break-word}
-.chat-bubble.me{background:rgba(240,185,11,.12);border:1px solid rgba(240,185,11,.2);align-self:flex-end;border-radius:12px 2px 12px 12px}
-.chat-bubble.other{background:var(--bg2);border-radius:2px 12px 12px 12px}
-.chat-name{font-size:10px;color:var(--muted);margin-bottom:2px}
-.chat-input-row{padding:8px 12px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0}
+.chat-sys{text-align:center;font-size:10px;color:var(--muted);background:var(--bg2);border-radius:6px;padding:4px 10px;margin:2px auto}
+.bubble{max-width:80%;padding:8px 11px;border-radius:12px;font-size:13px;line-height:1.4;word-break:break-word}
+.bubble.me{background:rgba(14,203,129,.1);border:1px solid rgba(14,203,129,.2);align-self:flex-end;border-radius:12px 2px 12px 12px}
+.bubble.other{background:var(--bg2);border-radius:2px 12px 12px 12px}
+.chat-from{font-size:10px;color:var(--muted);margin-bottom:2px}
+.chat-bar{padding:8px 12px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0}
 .chat-inp{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:10px 14px;color:var(--text);font-size:13px}
-.chat-inp:focus{border-color:var(--gold)}
-.chat-send{background:var(--gold);color:#000;border:none;border-radius:50%;width:40px;height:40px;font-size:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.chat-inp:focus{border-color:var(--green)}
+.chat-send{background:var(--green);color:#000;border:none;border-radius:50%;width:40px;height:40px;font-size:16px;flex-shrink:0}
 
-/* ═══════════════════════════════════════════════════════
-   RISULTATI PARTITA
-═══════════════════════════════════════════════════════ */
-#screen-results{background:var(--bg0);align-items:center;justify-content:center;padding:20px}
-.results-card{background:var(--bg1);border:1px solid var(--border);border-radius:20px;padding:24px;width:100%;max-width:360px}
-.results-trophy{font-size:56px;text-align:center;margin-bottom:8px}
-.results-title{font-size:20px;font-weight:700;text-align:center;color:var(--gold);margin-bottom:4px}
-.results-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:20px}
-.results-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
-.result-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--bg2)}
-.result-row.winner{background:rgba(240,185,11,.08);border:1px solid rgba(240,185,11,.3)}
-.result-rank{font-size:18px;width:26px}
-.result-name{flex:1;font-size:13px;font-weight:600}
-.result-total{font-size:14px;font-weight:700}
-.result-pnl{font-size:11px;text-align:right}
-.results-btns{display:flex;flex-direction:column;gap:8px}
+/* ── RESULTS ── */
+#sc-results{align-items:center;justify-content:center;padding:20px}
+.res-card{background:var(--bg1);border:1px solid var(--border);border-radius:20px;padding:24px;width:100%;max-width:360px}
+.res-trophy{font-size:56px;text-align:center;margin-bottom:8px}
+.res-title{font-size:20px;font-weight:700;text-align:center;color:var(--green);margin-bottom:4px}
+.res-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:18px}
+.res-list{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.res-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--bg2)}
+.res-row.winner{background:rgba(14,203,129,.08);border:1px solid rgba(14,203,129,.3)}
 
-/* ═══════════════════════════════════════════════════════
-   TOAST & MODALS
-═══════════════════════════════════════════════════════ */
-#toast-container{position:fixed;bottom:calc(20px + var(--safe-bottom));left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:90%;max-width:340px}
-.toast{background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:10px 16px;font-size:13px;font-weight:600;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.5);animation:toastIn .3s ease;max-width:100%}
-@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* ── TOAST ── */
+#toasts{position:fixed;bottom:calc(18px + var(--sab));left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:90%;max-width:340px}
+.toast{background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:10px 16px;font-size:13px;font-weight:600;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.5);animation:tin .3s ease}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;align-items:flex-end;justify-content:center}
-#modal-overlay.open{display:flex}
-.modal-sheet{background:var(--bg1);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;animation:sheetUp .3s ease;padding-bottom:calc(20px + var(--safe-bottom))}
-@keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
-.modal-handle{width:40px;height:4px;background:var(--dim);border-radius:2px;margin:0 auto 16px}
+/* ── NOTIFICHE ── */
+#notifs{position:fixed;top:calc(58px + var(--sat));right:10px;z-index:998;display:flex;flex-direction:column;gap:5px;pointer-events:none;max-width:230px}
+.notif{background:var(--bg1);border-radius:10px;padding:10px 12px;font-size:12px;box-shadow:0 3px 14px rgba(0,0,0,.6);animation:nr .3s ease;transition:opacity .3s}
+.notif-t{font-weight:700;margin-bottom:1px}
+.notif-b{color:var(--muted);font-size:11px}
+@keyframes nr{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+
+/* ── MODAL ── */
+#modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:900;align-items:flex-end;justify-content:center}
+#modal-bg.on{display:flex}
+.modal-sh{background:var(--bg1);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;animation:mup .3s ease;padding-bottom:calc(20px + var(--sab))}
+@keyframes mup{from{transform:translateY(100%)}to{transform:none}}
+.modal-bar{width:40px;height:4px;background:var(--dim);border-radius:2px;margin:0 auto 16px}
 .modal-title{font-size:17px;font-weight:700;margin-bottom:4px}
 .modal-sub{font-size:13px;color:var(--muted);margin-bottom:16px}
-.code-input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:22px;font-weight:700;color:var(--text);text-align:center;letter-spacing:.2em;text-transform:uppercase;margin-bottom:12px}
-.code-input:focus{border-color:var(--gold)}
-.modal-btn-row{display:flex;gap:8px}
+.code-inp{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:24px;font-weight:700;color:var(--text);text-align:center;letter-spacing:.2em;text-transform:uppercase;margin-bottom:12px}
+.code-inp:focus{border-color:var(--green)}
+.modal-row{display:flex;gap:8px}
 .modal-btn{flex:1;padding:14px;border-radius:12px;font-size:14px;font-weight:700;border:1px solid var(--border);background:var(--bg2);color:var(--text)}
-.modal-btn.primary{background:var(--gold);color:#000;border:none}
+.modal-btn.pri{background:var(--green);color:#000;border:none}
 
-/* ═══════════════════════════════════════════════════════
-   NOTIFICHE IN-APP
-═══════════════════════════════════════════════════════ */
-#notif-container{position:fixed;top:calc(60px + var(--safe-top));right:12px;z-index:9998;display:flex;flex-direction:column;gap:5px;pointer-events:none;max-width:240px}
-.notif-card{background:var(--bg1);border-radius:10px;padding:10px 12px;font-size:12px;box-shadow:0 3px 16px rgba(0,0,0,.6);animation:slideR .3s ease;transition:opacity .3s}
-.notif-title{font-weight:700;margin-bottom:1px}
-.notif-body{color:var(--muted);font-size:11px}
-@keyframes slideR{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
-
-/* ═══════════════════════════════════════════════════════
-   UTILITIES
-═══════════════════════════════════════════════════════ */
-.clr-green{color:var(--green)}
-.clr-red{color:var(--red)}
-.clr-gold{color:var(--gold)}
-.clr-muted{color:var(--muted)}
-.fw7{font-weight:700}
-.text-center{text-align:center}
-.mt8{margin-top:8px}
-.mt12{margin-top:12px}
-.gap-8{gap:8px}
+/* ── UTILS ── */
+.clr-g{color:var(--green)}.clr-r{color:var(--red)}.clr-gold{color:var(--gold)}.clr-m{color:var(--muted)}
 </style>
 </head>
 <body>
-
 <div id="app">
 
-<!-- ═══════════ SPLASH ═══════════ -->
-<div id="screen-splash" class="screen active">
-  <div class="splash-logo">🐝</div>
-  <div class="splash-title">AQUATRADE</div>
+<!-- SPLASH -->
+<div id="sc-splash" class="screen on">
+  <div class="splash-logo">💧</div>
+  <div class="splash-name">AQUATRADE</div>
   <div class="splash-sub">WATER STOCK TRADING</div>
-  <div class="splash-bar-bg"><div class="splash-bar"></div></div>
+  <div class="splash-bar-wrap"><div class="splash-bar" id="splash-bar"></div></div>
 </div>
 
-<!-- ═══════════ ONBOARDING ═══════════ -->
-<div id="screen-onboard" class="screen">
-  <div class="onboard-card">
-    <div class="onboard-icon">🐝</div>
-    <div class="onboard-title">Benvenuto in AquaTrade!</div>
-    <div class="onboard-desc">Scegli il tuo avatar e il tuo nome per iniziare a fare trading online contro altri giocatori.</div>
-
-    <div>
-      <div class="trade-label" style="margin-bottom:8px">Il tuo avatar</div>
-      <div class="avatar-grid" id="avatar-grid">
-        <button class="avatar-btn sel" data-av="🐝" onclick="selectAvatar(this,'🐝')">🐝</button>
-        <button class="avatar-btn" data-av="🐋" onclick="selectAvatar(this,'🐋')">🐋</button>
-        <button class="avatar-btn" data-av="💧" onclick="selectAvatar(this,'💧')">💧</button>
-        <button class="avatar-btn" data-av="🦈" onclick="selectAvatar(this,'🦈')">🦈</button>
-        <button class="avatar-btn" data-av="🚀" onclick="selectAvatar(this,'🚀')">🚀</button>
-        <button class="avatar-btn" data-av="🎯" onclick="selectAvatar(this,'🎯')">🎯</button>
-        <button class="avatar-btn" data-av="⚡" onclick="selectAvatar(this,'⚡')">⚡</button>
-        <button class="avatar-btn" data-av="🔥" onclick="selectAvatar(this,'🔥')">🔥</button>
-        <button class="avatar-btn" data-av="💎" onclick="selectAvatar(this,'💎')">💎</button>
-        <button class="avatar-btn" data-av="👑" onclick="selectAvatar(this,'👑')">👑</button>
-      </div>
-    </div>
-
-    <div>
-      <div class="trade-label" style="margin-bottom:6px">Il tuo nome</div>
-      <input id="name-input" class="name-input" type="text" placeholder="Es. WaterWhale88" maxlength="20" value="">
-    </div>
-
-    <button class="btn-primary" onclick="completeOnboarding()">Inizia a giocare! 🚀</button>
+<!-- ONBOARD -->
+<div id="sc-onboard" class="screen">
+  <div style="text-align:center;margin-bottom:6px">
+    <div style="font-size:40px">💧</div>
+    <div style="font-size:20px;font-weight:700;color:var(--green);margin-top:6px">Benvenuto!</div>
+    <div style="font-size:13px;color:var(--muted);margin-top:4px">Scegli avatar e nome per giocare</div>
   </div>
+  <div class="card">
+    <div class="card-title">Il tuo avatar</div>
+    <div class="av-grid" id="av-grid">
+      <button class="av-btn on" onclick="selAv(this,'💧')">💧</button>
+      <button class="av-btn" onclick="selAv(this,'🐋')">🐋</button>
+      <button class="av-btn" onclick="selAv(this,'🦈')">🦈</button>
+      <button class="av-btn" onclick="selAv(this,'🚀')">🚀</button>
+      <button class="av-btn" onclick="selAv(this,'⚡')">⚡</button>
+      <button class="av-btn" onclick="selAv(this,'🔥')">🔥</button>
+      <button class="av-btn" onclick="selAv(this,'💎')">💎</button>
+      <button class="av-btn" onclick="selAv(this,'👑')">👑</button>
+      <button class="av-btn" onclick="selAv(this,'🎯')">🎯</button>
+      <button class="av-btn" onclick="selAv(this,'🌊')">🌊</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Il tuo nome</div>
+    <input id="ob-name" class="inp" type="text" maxlength="20" placeholder="Es. WaterTrader99">
+  </div>
+  <button class="btn-main" onclick="finishOnboard()">Inizia a giocare 🚀</button>
 </div>
 
-<!-- ═══════════ HOME ═══════════ -->
-<div id="screen-home" class="screen">
-  <div class="home-header">
-    <div class="home-logo">🐝 AQUATRADE</div>
-    <div style="display:flex;align-items:center;gap:8px">
-      <div class="home-online"><div class="dot-live"></div><span id="online-count">0 online</span></div>
-      <div class="home-wallet" id="home-wallet">🐝 50,000</div>
+<!-- HOME -->
+<div id="sc-home" class="screen">
+  <div class="topbar">
+    <div class="topbar-logo">💧 AQUATRADE</div>
+    <div class="topbar-right">
+      <div class="online-pill"><div class="dot"></div><span id="online-n">0 online</span></div>
+      <div class="wallet-pill" onclick="goGame()"><div class="wallet-val" id="h-wallet">50,000 BEE</div></div>
     </div>
   </div>
-
-  <div class="home-scroll">
-    <!-- Saluto -->
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;background:var(--bg1);border:1px solid var(--border);border-radius:14px;padding:14px">
-      <div id="home-av" style="font-size:32px">🐝</div>
+  <div class="scroll">
+    <!-- Profile -->
+    <div class="profile-card">
+      <div class="profile-av" id="h-av">💧</div>
       <div>
-        <div style="font-size:15px;font-weight:700" id="home-name">Trader</div>
-        <div style="font-size:11px;color:var(--muted)">P&L oggi: <span id="home-pnl" class="clr-green">+0 BEE</span></div>
+        <div class="profile-name" id="h-name">Trader</div>
+        <div class="profile-pnl">P&L: <span id="h-pnl" class="clr-g">+0 BEE</span></div>
       </div>
-      <button onclick="openModal('profile')" style="margin-left:auto;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--muted);font-size:12px">✏️ Modifica</button>
+      <button class="profile-edit" onclick="openModal('profile')">✏️ Modifica</button>
     </div>
 
-    <!-- Modalità gioco -->
-    <div class="section-title">Gioca</div>
+    <div class="sec-title">Modalità di gioco</div>
     <div class="mode-grid">
-      <button class="mode-card gold" onclick="joinPublicLobby()">
-        <div class="mode-card-icon">🌍</div>
-        <div class="mode-card-title">Lobby Pubblica</div>
-        <div class="mode-card-desc">Trading libero con tutti i giocatori online</div>
+      <button class="mode-card" onclick="joinPublic()">
+        <div class="mode-icon">🌍</div>
+        <div class="mode-title">Lobby Pubblica</div>
+        <div class="mode-desc">Trading con tutti i giocatori online</div>
         <div class="mode-badge badge-live">● LIVE</div>
       </button>
-      <button class="mode-card purple" onclick="openModal('create_room')">
-        <div class="mode-card-icon">⚔️</div>
-        <div class="mode-card-title">Torneo Privato</div>
-        <div class="mode-card-desc">Crea stanza e sfida i tuoi amici</div>
-        <div class="mode-badge badge-new">PRIVATO</div>
+      <button class="mode-card" onclick="openModal('create')">
+        <div class="mode-icon">⚔️</div>
+        <div class="mode-title">Torneo Privato</div>
+        <div class="mode-desc">Crea stanza e sfida gli amici</div>
+        <div class="mode-badge badge-pvp">PRIVATO</div>
       </button>
-      <button class="mode-card green" onclick="openModal('join_room')">
-        <div class="mode-card-icon">🔑</div>
-        <div class="mode-card-title">Entra con Codice</div>
-        <div class="mode-card-desc">Hai un codice stanza? Entra subito</div>
-        <div class="mode-badge badge-live">JOIN</div>
+      <button class="mode-card" onclick="openModal('join')">
+        <div class="mode-icon">🔑</div>
+        <div class="mode-title">Entra con Codice</div>
+        <div class="mode-desc">Hai un codice? Entra subito</div>
+        <div class="mode-badge badge-join">JOIN</div>
       </button>
-      <button class="mode-card blue" onclick="joinPublicLobby()">
-        <div class="mode-card-icon">📊</div>
-        <div class="mode-card-title">Pratica Solo</div>
-        <div class="mode-card-desc">Fai trading senza competere — impara il mercato</div>
-        <div class="mode-badge" style="background:rgba(22,119,255,.1);color:var(--blue);border:1px solid rgba(22,119,255,.3)">TRAINING</div>
+      <button class="mode-card" onclick="joinPublic()">
+        <div class="mode-icon">📊</div>
+        <div class="mode-title">Pratica Libera</div>
+        <div class="mode-desc">Impara il mercato senza competere</div>
+        <div class="mode-badge" style="background:rgba(240,185,11,.1);color:var(--gold);border:1px solid rgba(240,185,11,.3)">TRAINING</div>
       </button>
     </div>
 
-    <!-- Classifica -->
-    <div class="section-title">Top Traders</div>
-    <div id="home-leaderboard"></div>
-
-    <!-- Giocatori online -->
-    <div class="section-title" style="margin-top:4px">Online ora</div>
-    <div id="home-players"></div>
-
-    <div style="height:20px"></div>
+    <div class="sec-title">Classifica</div>
+    <div id="h-lb"></div>
+    <div style="height:10px"></div>
   </div>
 </div>
 
-<!-- ═══════════ STANZA ═══════════ -->
-<div id="screen-room" class="screen">
-  <div class="room-header">
+<!-- ROOM -->
+<div id="sc-room" class="screen">
+  <div class="room-hdr">
     <button class="back-btn" onclick="leaveRoom()">←</button>
     <div style="flex:1">
       <div style="font-size:14px;font-weight:700" id="room-title">Stanza</div>
-      <div style="font-size:11px;color:var(--muted)" id="room-subtitle">In attesa...</div>
+      <div style="font-size:11px;color:var(--muted)" id="room-sub">In attesa...</div>
     </div>
-    <div class="room-code-badge" id="room-code-badge">----</div>
+    <div class="room-code-pill" id="room-code-pill">-----</div>
   </div>
-
   <div class="room-scroll">
-    <!-- Codice stanza -->
-    <div class="room-share-box" id="room-share-box">
-      <div style="font-size:12px;color:var(--muted)">Codice stanza — condividi con gli amici</div>
-      <div class="room-share-code" id="room-share-code">-----</div>
-      <button class="btn-copy-code" onclick="copyRoomCode()">📋 Copia codice</button>
+    <div class="share-box" id="share-box">
+      <div style="font-size:12px;color:var(--muted)">Codice stanza — invia agli amici</div>
+      <div class="share-code" id="share-code">-----</div>
+      <button class="copy-btn" onclick="copyCode()">📋 Copia codice</button>
+      <div class="share-hint" style="margin-top:6px">Possono unirsi da → Entra con Codice</div>
     </div>
-
-    <!-- Giocatori nella stanza -->
-    <div class="section-title">Giocatori (<span id="room-player-count">0</span>/8)</div>
-    <div id="room-players-grid" class="room-players-grid"></div>
-
-    <!-- Opzioni (solo host) -->
-    <div id="room-options-section">
-      <div class="section-title">Impostazioni partita</div>
-      <div class="room-options">
-        <div class="option-row">
-          <div>
-            <div class="option-label">Modalità</div>
-            <div class="option-sub">Chi ha il portfolio più alto vince</div>
-          </div>
-          <select class="select-input" id="room-mode-sel">
-            <option value="tournament">Torneo (5 min)</option>
-            <option value="race">Race (3 min)</option>
-            <option value="free">Free (10 min)</option>
-          </select>
-        </div>
-        <div class="option-row">
-          <div>
-            <div class="option-label">Massimo giocatori</div>
-            <div class="option-sub">Da 2 a 8</div>
-          </div>
-          <select class="select-input" id="room-max-sel">
-            <option value="2">2</option>
-            <option value="4">4</option>
-            <option value="6">6</option>
-            <option value="8" selected>8</option>
-          </select>
-        </div>
+    <div class="sec-title">Giocatori (<span id="room-p-count">0</span>/8)</div>
+    <div id="room-grid" class="room-grid"></div>
+    <div id="room-host-opts">
+      <div class="sec-title">Impostazioni</div>
+      <div class="opt-row">
+        <div><div class="opt-label">Modalità</div><div class="opt-sub">Chi ha più BEE vince</div></div>
+        <select class="sel" id="r-mode">
+          <option value="tournament">🏆 Torneo (5 min)</option>
+          <option value="race">⚡ Race (3 min)</option>
+          <option value="free">🎮 Free (10 min)</option>
+        </select>
       </div>
-      <button class="btn-start" id="start-match-btn" onclick="startMatch()" disabled>
+      <div class="opt-row">
+        <div><div class="opt-label">Max giocatori</div></div>
+        <select class="sel" id="r-max">
+          <option value="2">2</option><option value="4">4</option>
+          <option value="6">6</option><option value="8" selected>8</option>
+        </select>
+      </div>
+      <button class="btn-start" id="start-btn" onclick="startMatch()" disabled>
         In attesa di almeno 2 giocatori...
       </button>
     </div>
-
-    <div id="room-guest-section" style="display:none">
-      <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">
-        In attesa che l'host avvii la partita...
-      </div>
+    <div id="room-guest-msg" style="display:none;text-align:center;padding:20px;color:var(--muted);font-size:13px">
+      In attesa che l'host avvii la partita...
     </div>
   </div>
 </div>
 
-<!-- ═══════════ GIOCO ═══════════ -->
-<div id="screen-game" class="screen">
-  <div class="game-topbar">
-    <div class="game-wallet">
-      <div class="game-wallet-label">Wallet</div>
-      <div class="game-wallet-val" id="g-wallet">50,000 BEE</div>
+<!-- GAME -->
+<div id="sc-game" class="screen">
+  <div class="g-topbar">
+    <div>
+      <div class="g-wallet-lbl">Wallet</div>
+      <div class="g-wallet-val" id="g-wallet">50,000 BEE</div>
     </div>
-    <div id="g-timer" class="game-timer">--:--</div>
-    <div class="game-wallet" style="align-items:flex-end">
-      <div class="game-pnl-label">P&L</div>
-      <div class="game-pnl" id="g-pnl">+0</div>
+    <div id="g-timer" class="g-timer">FREE</div>
+    <div>
+      <div class="g-pnl-lbl">P&L</div>
+      <div class="g-pnl-val" id="g-pnl">+0</div>
     </div>
   </div>
-
-  <div class="game-tabs">
-    <button class="game-tab on" id="gtab-chart" onclick="showGameTab('chart')">
-      <div class="game-tab-icon">📈</div>Chart
-    </button>
-    <button class="game-tab" id="gtab-market" onclick="showGameTab('market')">
-      <div class="game-tab-icon">💧</div>Market
-    </button>
-    <button class="game-tab" id="gtab-trade" onclick="showGameTab('trade')">
-      <div class="game-tab-icon">💰</div>Trade
-    </button>
-    <button class="game-tab" id="gtab-pos" onclick="showGameTab('pos')">
-      <div class="game-tab-icon">📋</div>Pos
-    </button>
-    <button class="game-tab" id="gtab-players" onclick="showGameTab('players')">
-      <div class="game-tab-icon">👥</div>Rank
-    </button>
-    <button class="game-tab" id="gtab-chat" onclick="showGameTab('chat')">
-      <div class="game-tab-icon">💬</div>Chat
-    </button>
+  <div class="g-tabs">
+    <button class="g-tab on" id="gt-chart"   onclick="gTab('chart')">  <div class="g-tab-ic">📈</div>Chart</button>
+    <button class="g-tab"    id="gt-market"  onclick="gTab('market')"> <div class="g-tab-ic">💧</div>Market</button>
+    <button class="g-tab"    id="gt-trade"   onclick="gTab('trade')">  <div class="g-tab-ic">💰</div>Trade</button>
+    <button class="g-tab"    id="gt-pos"     onclick="gTab('pos')">    <div class="g-tab-ic">📋</div>Pos</button>
+    <button class="g-tab"    id="gt-rank"    onclick="gTab('rank')">   <div class="g-tab-ic">👥</div>Rank</button>
+    <button class="g-tab"    id="gt-chat"    onclick="gTab('chat')">   <div class="g-tab-ic">💬</div>Chat</button>
   </div>
-
-  <div class="game-content">
-
-    <!-- CHART TAB -->
-    <div class="game-panel active" id="gpanel-chart">
-      <div class="chart-header">
-        <div class="chart-ticker-row">
+  <div class="g-content">
+    <!-- Chart -->
+    <div class="g-panel on" id="gp-chart">
+      <div class="chart-hdr">
+        <div class="chart-row1">
           <span class="chart-sym" id="c-sym">AWK</span>
-          <span class="chart-price" id="c-price">134.20</span>
+          <span class="chart-price" id="c-price">0.00</span>
           <span class="chart-chg" id="c-chg">+0.00%</span>
         </div>
         <div class="chart-stats">
-          <div class="chart-stat"><span class="chart-stat-l">O</span><span class="chart-stat-v" id="c-open">—</span></div>
-          <div class="chart-stat"><span class="chart-stat-l">H</span><span class="chart-stat-v clr-green" id="c-high">—</span></div>
-          <div class="chart-stat"><span class="chart-stat-l">L</span><span class="chart-stat-v clr-red" id="c-low">—</span></div>
-          <div class="chart-stat"><span class="chart-stat-l">V</span><span class="chart-stat-v" id="c-vol">—</span></div>
+          <div class="cs"><span class="cs-l">O</span><span class="cs-v" id="c-o">—</span></div>
+          <div class="cs"><span class="cs-l">H</span><span class="cs-v clr-g" id="c-h">—</span></div>
+          <div class="cs"><span class="cs-l">L</span><span class="cs-v clr-r" id="c-l">—</span></div>
+          <div class="cs"><span class="cs-l">V</span><span class="cs-v" id="c-v">—</span></div>
         </div>
       </div>
-      <canvas id="chart-canvas"></canvas>
-      <div class="chart-indicators">
-        <div class="ind-item"><span class="ind-l">RSI</span><span id="i-rsi" style="font-weight:600">—</span></div>
-        <div class="ind-item"><span class="ind-l">SMA20</span><span id="i-sma" style="font-weight:600">—</span></div>
-        <div class="ind-item"><span class="ind-l">MACD</span><span id="i-macd" style="font-weight:600">—</span></div>
+      <canvas id="cv"></canvas>
+      <div class="chart-inds">
+        <div class="ind"><span class="ind-l">RSI</span><span id="i-rsi" style="font-weight:600">—</span></div>
+        <div class="ind"><span class="ind-l">SMA20</span><span id="i-sma" style="font-weight:600">—</span></div>
+        <div class="ind"><span class="ind-l">MACD</span><span id="i-macd" style="font-weight:600">—</span></div>
       </div>
     </div>
-
-    <!-- MARKET TAB -->
-    <div class="game-panel" id="gpanel-market">
-      <input class="wl-search" id="wl-search" placeholder="🔍 Cerca stock..." oninput="filterWL(this.value)">
-      <div class="wl-scroll" id="wl-list"></div>
+    <!-- Market -->
+    <div class="g-panel" id="gp-market">
+      <input class="wl-search" placeholder="🔍 Cerca stock..." oninput="filterWL(this.value)">
+      <div class="wl-list" id="wl-list"></div>
     </div>
-
-    <!-- TRADE TAB -->
-    <div class="game-panel" id="gpanel-trade">
-      <div class="trade-scroll">
-        <div class="trade-stock-row" id="trade-chips"></div>
-        <div class="trade-card">
-          <div class="trade-card-title">Ordine Rapido — <span id="t-cur-sym" style="color:var(--gold)">AWK</span> @ <span id="t-cur-price">—</span></div>
+    <!-- Trade -->
+    <div class="g-panel" id="gp-trade">
+      <div class="trade-scr">
+        <div class="chips" id="t-chips"></div>
+        <div class="t-card">
+          <div class="t-card-lbl">Ordine — <span id="t-sym" class="clr-g">AWK</span> @ <span id="t-px">—</span></div>
           <div class="side-row">
-            <button id="t-buy-btn" class="side-btn buy-on" onclick="setTradeSide('buy')">BUY 📈</button>
-            <button id="t-sell-btn" class="side-btn sell-off" onclick="setTradeSide('sell')">SELL 📉</button>
+            <button id="tb-buy"  class="side-btn sb-buy-on"  onclick="setSide('buy')">BUY 📈</button>
+            <button id="tb-sell" class="side-btn sb-off"      onclick="setSide('sell')">SELL 📉</button>
           </div>
-          <div class="trade-label">Quantità</div>
-          <input class="trade-input" type="number" id="t-qty" value="100" min="10" step="10" oninput="updateTradeSummary()">
+          <div class="t-lbl">Quantità</div>
+          <input class="t-inp" type="number" id="t-qty" value="100" min="10" step="10" oninput="updSumm()">
           <div class="pct-row">
-            <button class="pct-btn" onclick="setTradePct(25)">25%</button>
-            <button class="pct-btn" onclick="setTradePct(50)">50%</button>
-            <button class="pct-btn" onclick="setTradePct(75)">75%</button>
-            <button class="pct-btn" onclick="setTradePct(100)">Max</button>
+            <button class="pct-btn" onclick="setPct(25)">25%</button>
+            <button class="pct-btn" onclick="setPct(50)">50%</button>
+            <button class="pct-btn" onclick="setPct(75)">75%</button>
+            <button class="pct-btn" onclick="setPct(100)">Max</button>
           </div>
-          <div class="trade-summary">
-            <div class="trade-summ-row"><span class="clr-muted">Totale stimato</span><span id="ts-total">—</span></div>
-            <div class="trade-summ-row"><span class="clr-muted">Fee (0.1%)</span><span id="ts-fee">—</span></div>
-            <div class="trade-summ-row"><span class="clr-muted">Disponibile</span><span id="ts-avail" class="clr-gold">—</span></div>
+          <div class="t-summ">
+            <div class="t-summ-row"><span class="clr-m">Totale</span><span id="ts-tot">—</span></div>
+            <div class="t-summ-row"><span class="clr-m">Fee (0.1%)</span><span id="ts-fee">—</span></div>
+            <div class="t-summ-row"><span class="clr-m">Disponibile</span><span id="ts-av" class="clr-g">—</span></div>
           </div>
-          <button id="t-exec-btn" class="exec-btn-buy" onclick="executeTrade()">BUY AWK</button>
+          <button id="t-exec" class="exec-buy" onclick="execTrade()">BUY AWK</button>
         </div>
       </div>
     </div>
-
-    <!-- POSITIONS TAB -->
-    <div class="game-panel" id="gpanel-pos">
-      <div class="pos-list" id="pos-list"></div>
-    </div>
-
-    <!-- PLAYERS TAB -->
-    <div class="game-panel" id="gpanel-players">
-      <div class="players-scroll" id="ingame-players"></div>
-    </div>
-
-    <!-- CHAT TAB -->
-    <div class="game-panel" id="gpanel-chat">
+    <!-- Pos -->
+    <div class="g-panel" id="gp-pos"><div class="pos-list" id="pos-list"></div></div>
+    <!-- Rank -->
+    <div class="g-panel" id="gp-rank"><div class="rank-list" id="rank-list"></div></div>
+    <!-- Chat -->
+    <div class="g-panel" id="gp-chat">
       <div class="chat-msgs" id="chat-msgs"></div>
-      <div class="chat-input-row">
-        <input class="chat-inp" id="chat-inp" placeholder="Messaggio..." maxlength="100" onkeydown="if(event.key==='Enter')sendChat()">
+      <div class="chat-bar">
+        <input class="chat-inp" id="chat-inp" placeholder="Messaggio..." maxlength="100"
+               onkeydown="if(event.key==='Enter')sendChat()">
         <button class="chat-send" onclick="sendChat()">➤</button>
       </div>
     </div>
-
   </div>
 </div>
 
-<!-- ═══════════ RISULTATI ═══════════ -->
-<div id="screen-results" class="screen">
-  <div class="results-card">
-    <div class="results-trophy" id="r-trophy">🏆</div>
-    <div class="results-title" id="r-title">Partita Terminata!</div>
-    <div class="results-sub" id="r-sub">Ecco i risultati finali</div>
-    <div class="results-list" id="results-list"></div>
-    <div class="results-btns">
-      <button class="btn-primary" onclick="goHome()">🏠 Torna alla Home</button>
-      <button class="btn-secondary" onclick="goHome()">🔄 Gioca ancora</button>
-    </div>
+<!-- RESULTS -->
+<div id="sc-results" class="screen">
+  <div class="res-card">
+    <div class="res-trophy" id="r-trophy">🏆</div>
+    <div class="res-title"  id="r-title">Partita Terminata</div>
+    <div class="res-sub"    id="r-sub">Risultati finali</div>
+    <div class="res-list"   id="r-list"></div>
+    <button class="btn-main" onclick="goHome()">🏠 Torna alla Home</button>
+    <div style="height:8px"></div>
+    <button class="btn-sec" onclick="goHome()">🔄 Gioca ancora</button>
   </div>
 </div>
 
 </div><!-- /app -->
 
-<!-- TOAST -->
-<div id="toast-container"></div>
-<!-- NOTIFICHE -->
-<div id="notif-container"></div>
+<div id="toasts"></div>
+<div id="notifs"></div>
 
-<!-- MODAL OVERLAY -->
-<div id="modal-overlay" onclick="closeModal(event)">
-  <div class="modal-sheet" id="modal-sheet">
-    <div class="modal-handle"></div>
-    <div id="modal-content"></div>
+<!-- MODAL -->
+<div id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal-sh">
+    <div class="modal-bar"></div>
+    <div id="modal-body"></div>
   </div>
 </div>
 
 <script>
 // ═══════════════════════════════════════════════════════════
-//  AQUATRADE — PWA CLIENT
+//  AQUATRADE — PWA Client
 // ═══════════════════════════════════════════════════════════
 
-// ── Configura URL server ─────────────────────────────────
-// In sviluppo usa localhost, in produzione usa il tuo URL Railway
-const SERVER_URL = window.location.hostname === 'localhost'
-  ? 'ws://localhost:3000'
-  : `wss://${window.location.host}`;
+// SERVER URL — usa wss automaticamente in produzione
+const WS_URL = location.protocol === 'https:'
+  ? 'wss://' + location.host
+  : 'ws://'  + location.host;
 
-// ── Stocks ───────────────────────────────────────────────
 const STOCKS = {
-  AWK:  { name:"American Water Works", base:134.20, color:"#F0B90B" },
-  XYL:  { name:"Xylem Inc.",           base:112.50, color:"#0ECB81" },
-  VIE:  { name:"Veolia Environ.",      base:28.74,  color:"#F6465D" },
-  WTRG: { name:"Essential Utilities",  base:24.18,  color:"#1677FF" },
-  FIW:  { name:"First Trust ETF",      base:38.92,  color:"#9C27B0" },
-  SGS:  { name:"Suez SA",              base:11.30,  color:"#FF9800" },
-  PRMW: { name:"Primo Water Corp.",    base:17.85,  color:"#00BCD4" },
-  PHO:  { name:"Invesco Water ETF",    base:54.60,  color:"#E91E63" },
+  AWK: {name:"American Water Works",base:134.20,color:"#F0B90B"},
+  XYL: {name:"Xylem Inc.",          base:112.50,color:"#0ECB81"},
+  VIE: {name:"Veolia Environ.",     base:28.74, color:"#F6465D"},
+  WTRG:{name:"Essential Util.",     base:24.18, color:"#1677FF"},
+  FIW: {name:"First Trust ETF",     base:38.92, color:"#9C27B0"},
+  SGS: {name:"Suez SA",             base:11.30, color:"#FF9800"},
+  PRMW:{name:"Primo Water",         base:17.85, color:"#00BCD4"},
+  PHO: {name:"Invesco Water ETF",   base:54.60, color:"#E91E63"},
 };
 const TK = Object.keys(STOCKS);
 
-// ── Stato locale ─────────────────────────────────────────
+// ── Stato ────────────────────────────────────────────────
 const G = {
-  ws: null,
-  playerId: null,
-  name: localStorage.getItem('bc_name') || 'Trader',
-  avatar: localStorage.getItem('bc_avatar') || '🐝',
-  wallet: 50000,
-  portfolio: {},
-  history: [],
-  pnl: 0,
-  prices: {},
-  candles: {},
-  lc: {},
-  curTicker: 'AWK',
-  tradeSide: 'buy',
-  screen: 'splash',
-  room: null,
-  isHost: false,
-  matchActive: false,
-  matchEndTime: null,
-  timerInterval: null,
-  onlinePlayers: [],
-  leaderboard: [],
-  roomPlayers: [],
-  ingamePlayers: [],
-  chat: [],
-  wlFilter: '',
-  reconnectTimer: null,
+  ws:null, pid:null,
+  name: localStorage.getItem('at_name') || 'Trader',
+  avatar: localStorage.getItem('at_av') || '💧',
+  wallet:50000, pnl:0,
+  portfolio:{}, history:[],
+  prices:{}, candles:{}, lc:{},
+  cur:'AWK', side:'buy',
+  room:null, isHost:false,
+  matchEnd:null, timerIv:null,
+  lb:[], chat:[], wlF:'',
+  screen:'splash',
 };
 
-// Inizializza candles
-TK.forEach(k => {
-  let p = STOCKS[k].base, arr = [];
-  for (let i=60;i>=0;i--) {
-    const o=p, h=o*(1+Math.random()*.012), l=o*(1-Math.random()*.012), c=l+(h-l)*Math.random();
-    arr.push({o,h,l,c,v:rnd(200,4000)|0,t:Date.now()-i*300000});
-    p=c;
+// Inizializza candle locali
+TK.forEach(k=>{
+  let p=STOCKS[k].base,a=[];
+  for(let i=60;i>=0;i--){
+    const o=p,h=o*(1+Math.random()*.013),l=o*(1-Math.random()*.013),c=l+(h-l)*Math.random();
+    a.push({o,h,l,c,v:(200+Math.random()*4500)|0,t:Date.now()-i*300000});p=c;
   }
-  G.candles[k] = arr;
-  G.lc[k] = {...arr.at(-1)};
-  G.prices[k] = G.lc[k].c;
+  G.candles[k]=a; G.lc[k]={...a.at(-1)}; G.prices[k]=G.lc[k].c;
 });
 
-// ── Helpers ───────────────────────────────────────────────
-const fmt  = (n,d=0) => parseFloat(n).toLocaleString('it-IT',{minimumFractionDigits:d,maximumFractionDigits:d||2});
-const fmtP = n => (n>=0?'+':'')+fmt(n,0);
-const clr  = n => n>=0?'var(--green)':'var(--red)';
-const rnd  = (a,b) => a+Math.random()*(b-a);
-const $    = id => document.getElementById(id);
+// ── Helpers ──────────────────────────────────────────────
+const $  = id => document.getElementById(id);
+const fmt= (n,d=0) => isNaN(n)?'0':parseFloat(n).toLocaleString('it-IT',{minimumFractionDigits:d,maximumFractionDigits:d||2});
+const fmtP=n=>(n>=0?'+':'')+fmt(n,0);
+const clr =n=>n>=0?'var(--green)':'var(--red)';
+const rnd =(a,b)=>a+Math.random()*(b-a);
+const nowm=()=>new Date().toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
 
-function showScreen(name) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  $('screen-'+name)?.classList.add('active');
-  G.screen = name;
+function showScreen(s){
+  document.querySelectorAll('.screen').forEach(x=>x.classList.remove('on'));
+  $('sc-'+s)?.classList.add('on');
+  G.screen=s;
 }
 
-function toast(msg, color=null) {
-  const d = document.createElement('div');
-  d.className = 'toast';
-  if (color) d.style.color = color;
-  d.textContent = msg;
-  $('toast-container').appendChild(d);
-  setTimeout(() => d.style.opacity='0', 2200);
-  setTimeout(() => d.remove(), 2700);
+function toast(msg,col=null){
+  const d=document.createElement('div');d.className='toast';
+  if(col)d.style.color=col;d.textContent=msg;
+  $('toasts').appendChild(d);
+  setTimeout(()=>d.style.opacity='0',2200);
+  setTimeout(()=>d.remove(),2700);
 }
 
-function notify(title, body, type='system') {
-  const d = document.createElement('div');
-  d.className = 'notif-card';
-  const bc = type==='buy'?'var(--green)':type==='sell'?'var(--red)':type==='mission'?'var(--blue)':'var(--gold)';
-  d.style.borderLeft = `3px solid ${bc}`;
-  d.innerHTML = `<div class="notif-title">${title}</div>${body?`<div class="notif-body">${body}</div>`:''}`;
-  $('notif-container').appendChild(d);
-  setTimeout(() => d.style.opacity='0', 3000);
-  setTimeout(() => d.remove(), 3500);
+function notif(title,body,type='info'){
+  const d=document.createElement('div');d.className='notif';
+  const bc=type==='buy'?'var(--green)':type==='sell'?'var(--red)':type==='warn'?'var(--gold)':'var(--blue)';
+  d.style.borderLeft=`3px solid ${bc}`;
+  d.innerHTML=`<div class="notif-t">${title}</div>${body?`<div class="notif-b">${body}</div>`:''}`;
+  $('notifs').appendChild(d);
+  setTimeout(()=>d.style.opacity='0',3000);setTimeout(()=>d.remove(),3500);
 }
 
-function addChatMsg(msg) {
-  G.chat.push(msg);
-  if (G.screen === 'game') renderChat();
+// ── Audio ────────────────────────────────────────────────
+let actx=null;
+function tone(f,d=.1,t='sine',v=.2){
+  try{
+    if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(),g=actx.createGain();
+    o.connect(g);g.connect(actx.destination);
+    o.frequency.value=f;o.type=t;
+    g.gain.setValueAtTime(v,actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+d);
+    o.start();o.stop(actx.currentTime+d);
+  }catch(e){}
 }
+const sfxBuy=()=>{tone(523,.07);setTimeout(()=>tone(659,.07),80);setTimeout(()=>tone(784,.1),160);};
+const sfxSell=p=>p>=0?(tone(784,.08),setTimeout(()=>tone(1047,.1),100)):tone(280,.12,'sawtooth');
+const sfxNotif=()=>tone(880,.06);
 
-// ── Audio ─────────────────────────────────────────────────
-let audioCtx = null;
-function tone(freq, dur=0.1, type='sine', vol=0.2) {
-  try {
-    if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
-    o.connect(g); g.connect(audioCtx.destination);
-    o.frequency.value=freq; o.type=type;
-    g.gain.setValueAtTime(vol, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur);
-    o.start(); o.stop(audioCtx.currentTime+dur);
-  } catch(e){}
-}
-const sfxBuy  = () => { tone(523,.07); setTimeout(()=>tone(659,.07),80); setTimeout(()=>tone(784,.1),160); };
-const sfxSell = p => p>=0 ? (tone(784,.08),setTimeout(()=>tone(1047,.12),100)) : tone(300,.12,'sawtooth');
-const sfxNotif= () => tone(880,.06);
-const sfxLevel= () => [523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.15),i*120));
-
-// ── Service Worker ────────────────────────────────────────
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
-    .then(() => console.log('[PWA] Service Worker registered'))
-    .catch(e => console.warn('[PWA] SW error:', e));
-}
-
-// ── WebSocket ─────────────────────────────────────────────
-function connectWS() {
-  if (G.ws && G.ws.readyState < 2) return;
-  G.ws = new WebSocket(SERVER_URL);
-
-  G.ws.onopen = () => {
-    console.log('[WS] Connected');
-    clearTimeout(G.reconnectTimer);
-    // Manda profilo
-    wsend({ type:'set_profile', name: G.name, avatar: G.avatar });
-    // Ping ogni 25s
-    setInterval(() => wsend({ type:'ping' }), 25000);
+// ── WebSocket ────────────────────────────────────────────
+function connectWS(){
+  if(G.ws&&G.ws.readyState<2)return;
+  G.ws=new WebSocket(WS_URL);
+  G.ws.onopen=()=>{
+    console.log('[WS] connected');
+    wsend({type:'set_profile',name:G.name,avatar:G.avatar});
+    setInterval(()=>wsend({type:'ping'}),25000);
   };
-
-  G.ws.onmessage = e => {
-    let msg;
-    try { msg = JSON.parse(e.data); } catch { return; }
-    handleServer(msg);
-  };
-
-  G.ws.onclose = () => {
-    console.log('[WS] Disconnected — reconnecting in 3s...');
-    // Se bloccati sullo splash, forza avvio
-    if (G.screen === 'splash') { avviaGioco(); }
-    G.reconnectTimer = setTimeout(connectWS, 3000);
-  };
-
-  G.ws.onerror = (err) => {
-    console.warn('[WS] Connection error — running in offline mode');
-    // Avvia in modalità offline se bloccati sullo splash
-    if (G.screen === 'splash') { avviaGioco(); }
-  };
-
-
+  G.ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch{return}onMsg(m);};
+  G.ws.onclose=()=>{console.log('[WS] closed');setTimeout(connectWS,3000);};
+  G.ws.onerror=()=>{console.warn('[WS] error');};
 }
 
-function wsend(msg) {
-  if (G.ws?.readyState === WebSocket.OPEN) G.ws.send(JSON.stringify(msg));
+function wsend(msg){
+  if(G.ws?.readyState===WebSocket.OPEN)G.ws.send(JSON.stringify(msg));
 }
 
-// ── Gestione messaggi server ──────────────────────────────
-function handleServer(msg) {
-  switch (msg.type) {
-
+function onMsg(m){
+  switch(m.type){
     case 'welcome':
-      G.playerId = msg.playerId;
-      if (msg.prices) updatePrices(msg.prices);
-      if (msg.leaderboard) { G.leaderboard = msg.leaderboard; renderLeaderboard(); }
-      if (msg.chat) { G.chat = msg.chat; if(G.screen==='game') renderChat(); }
-      $('online-count').textContent = `${msg.onlineCount||0} online`;
+      G.pid=m.playerId;
+      if(m.prices)updPrices(m.prices);
+      if(m.leaderboard){G.lb=m.leaderboard;renderLB();}
+      if(m.chat){G.chat=m.chat;if(G.screen==='game')renderChat();}
+      $('online-n').textContent=(m.onlineCount||0)+' online';
       break;
-
-    case 'prices':
-      updatePrices(msg.prices);
-      break;
-
+    case 'prices':     updPrices(m.prices);break;
+    case 'leaderboard':G.lb=m.data;renderLB();if(G.screen==='game')renderRank();break;
+    case 'pong':       $('online-n').textContent=(m.onlineCount||0)+' online';break;
     case 'news':
-      notify(`📰 ${msg.news.tk||'Mercato'}`, msg.news.h.slice(0,60)+'…', msg.news.imp==='bull'?'buy':'sell');
+      notif('📰 '+(m.news.tk||'Mercato'),m.news.h.slice(0,55)+'…',m.news.imp==='bull'?'buy':'sell');
       break;
-
-    case 'leaderboard':
-      G.leaderboard = msg.data;
-      renderLeaderboard();
-      if (G.screen==='game') renderIngamePlayers();
-      break;
-
-    case 'pong':
-      $('online-count').textContent = `${msg.onlineCount||0} online`;
-      break;
-
     case 'public_state':
-      G.onlinePlayers = msg.players || [];
-      renderOnlinePlayers();
-      break;
-
-    case 'player_joined_public':
-      toast(`${msg.player.avatar} ${msg.player.name} è entrato`, 'var(--green)');
-      break;
-
+      renderHomeLB();break;
     case 'room_created':
     case 'room_joined':
-      G.room = msg.room;
-      G.isHost = msg.room.players.find(p=>p.id===G.playerId)?.isHost || false;
-      showScreen('room');
-      renderRoom();
-      break;
-
+      G.room=m.room;G.isHost=!!m.room.players.find(p=>p.id===G.pid&&p.isHost);
+      showScreen('room');renderRoom();break;
     case 'player_joined_room':
-      G.room = msg.room;
-      renderRoom();
-      toast(`${msg.player.avatar} ${msg.player.name} si è unito`, 'var(--green)');
-      sfxNotif();
-      break;
-
-    case 'player_left_room':
-      G.room = msg.room;
-      renderRoom();
-      break;
-
+      G.room=m.room;renderRoom();
+      toast(m.player.avatar+' '+m.player.name+' si è unito','var(--green)');sfxNotif();break;
+    case 'player_left_room':G.room=m.room;renderRoom();break;
     case 'new_host':
-      G.isHost = msg.hostId === G.playerId;
-      G.room = msg.room;
-      renderRoom();
-      if (G.isHost) toast('Sei diventato l\'host!', 'var(--gold)');
-      break;
-
+      G.isHost=m.hostId===G.pid;G.room=m.room;renderRoom();
+      if(G.isHost)toast('Sei il nuovo host!','var(--gold)');break;
     case 'match_started':
-      G.matchActive = true;
-      G.wallet = 50000;
-      G.portfolio = {};
-      G.history = [];
-      G.pnl = 0;
-      G.matchEndTime = Date.now() + msg.duration;
-      startGameTimer();
-      showScreen('game');
-      renderWatchlist();
-      renderPositions();
-      renderIngamePlayers();
-      toast('🚀 Partita iniziata! Hai '+fmt(msg.duration/1000/60)+' minuti!', 'var(--gold)');
-      sfxLevel();
-      break;
-
+      G.wallet=50000;G.pnl=0;G.portfolio={};G.history=[];
+      G.matchEnd=Date.now()+m.duration;
+      startTimer();showScreen('game');
+      renderWL();renderPos();renderRank();
+      toast('🚀 Partita iniziata!','var(--green)');break;
     case 'match_ended':
-      G.matchActive = false;
-      clearInterval(G.timerInterval);
-      showResults(msg.results, msg.winner);
-      break;
-
+      clearInterval(G.timerIv);showResults(m.results,m.winner);break;
     case 'player_traded':
-      if (G.screen==='game') {
-        addChatMsg({ sys:true, text:`${msg.player.avatar} ${msg.player.name} ha ${msg.trade.side==='buy'?'comprato':'venduto'} ${msg.trade.ticker}` });
-      }
-      break;
-
+      if(G.screen==='game')addChat({sys:true,text:m.player.avatar+' '+m.player.name+(m.trade.side==='buy'?' ha comprato ':' ha venduto ')+m.trade.ticker});break;
     case 'trade_ok':
-      G.wallet = msg.wallet;
-      G.portfolio = msg.portfolio || G.portfolio;
-      updateGameTopbar();
-      renderPositions();
-      if (msg.side==='buy') { sfxBuy(); toast(`✅ Comprato ${fmt(msg.qty)} ${msg.ticker}`, 'var(--green)'); }
-      else { sfxSell(msg.pnl||0); toast(`${msg.pnl>=0?'🎯':'📉'} ${msg.ticker} ${fmtP(msg.pnl||0)} BEE`, msg.pnl>=0?'var(--green)':'var(--red)'); }
-      updateTradeSummary();
-      break;
-
-    case 'trade_error':
-      toast(`❌ ${msg.msg}`, 'var(--red)');
-      break;
-
-    case 'chat':
-      addChatMsg(msg.msg);
-      if (G.screen==='game' && document.activeElement !== $('chat-inp')) sfxNotif();
-      break;
-
-    case 'error':
-      toast(`⚠️ ${msg.msg}`, 'var(--red)');
-      break;
-
-    case 'player_left':
-      $('online-count').textContent = `${msg.onlineCount||0} online`;
-      break;
-
-    case 'left_room':
-      G.room = null; G.isHost = false;
-      showScreen('home');
-      break;
+      G.wallet=m.wallet;G.portfolio=m.portfolio||G.portfolio;
+      updGameBar();renderPos();
+      if(m.side==='buy'){sfxBuy();toast('✅ Comprato '+fmt(m.qty)+' '+m.ticker,'var(--green)');}
+      else{sfxSell(m.pnl||0);toast((m.pnl>=0?'🎯':'📉')+' '+m.ticker+' '+fmtP(m.pnl||0)+' BEE',m.pnl>=0?'var(--green)':'var(--red)');}
+      updSumm();break;
+    case 'trade_error':toast('❌ '+m.msg,'var(--red)');break;
+    case 'chat':addChat(m.msg);if(G.screen==='game'&&document.activeElement!==$('chat-inp'))sfxNotif();break;
+    case 'left_room':G.room=null;G.isHost=false;showScreen('home');break;
+    case 'player_left':$('online-n').textContent=(m.onlineCount||0)+' online';break;
+    case 'error':toast('⚠️ '+m.msg,'var(--red)');break;
   }
 }
 
-// ── Aggiorna prezzi ───────────────────────────────────────
-function updatePrices(newPrices) {
-  Object.entries(newPrices).forEach(([k,p]) => {
-    const prev = G.prices[k] || p;
-    G.prices[k] = p;
-    // Aggiorna lc
-    if (G.lc[k]) {
-      G.lc[k].h = Math.max(G.lc[k].h, p);
-      G.lc[k].l = Math.min(G.lc[k].l, p);
-      G.lc[k].c = p;
-      G.lc[k].v += rnd(50,300)|0;
-    }
+// ── Prezzi ───────────────────────────────────────────────
+function updPrices(np){
+  Object.assign(G.prices,np);
+  Object.keys(np).forEach(k=>{
+    if(G.lc[k]){G.lc[k].c=np[k];G.lc[k].h=Math.max(G.lc[k].h,np[k]);G.lc[k].l=Math.min(G.lc[k].l,np[k]);G.lc[k].v+=rnd(30,200)|0;}
   });
-  // Calcola P&L
-  G.pnl = Object.entries(G.portfolio).reduce((a,[k,pos]) => a+(G.prices[k]-pos.avg)*pos.qty, 0)|0;
-  // Aggiorna UI se in gioco
-  if (G.screen==='game') {
-    updateGameTopbar();
-    if ($('gpanel-chart').classList.contains('active')) drawChart();
-    if ($('gpanel-market').classList.contains('active')) renderWatchlist();
-    if ($('gpanel-pos').classList.contains('active')) renderPositions();
-    updateChartHeader();
-  }
+  G.pnl=Object.entries(G.portfolio).reduce((a,[k,v])=>a+(G.prices[k]-v.avg)*v.qty,0)|0;
+  if(G.screen==='game'){updGameBar();if($('gp-market').classList.contains('on'))renderWL();if($('gp-pos').classList.contains('on'))renderPos();updChartHdr();drawCV();}
+  if(G.screen==='home')updHomeProfile();
 }
 
-// ── ONBOARDING ───────────────────────────────────────────
-let selectedAvatar = localStorage.getItem('bc_avatar') || '🐝';
-function selectAvatar(btn, av) {
-  document.querySelectorAll('.avatar-btn').forEach(b => b.classList.remove('sel'));
-  btn.classList.add('sel');
-  selectedAvatar = av;
+// ── Candle locale ─────────────────────────────────────────
+setInterval(()=>{
+  TK.forEach(k=>{
+    const mv=(Math.random()-.49)*STOCKS[k].base*.004;
+    const np=Math.max(STOCKS[k].base*.55,Math.min(STOCKS[k].base*1.45,(G.lc[k]?.c||STOCKS[k].base)+mv));
+    if(G.lc[k]){G.lc[k].h=Math.max(G.lc[k].h,np);G.lc[k].l=Math.min(G.lc[k].l,np);G.lc[k].c=np;G.lc[k].v+=rnd(20,150)|0;}
+    if(!G.ws||G.ws.readyState!==WebSocket.OPEN)G.prices[k]=np;
+  });
+  if(G.screen==='game'&&$('gp-chart').classList.contains('on'))drawCV();
+},2200);
+
+setInterval(()=>{
+  TK.forEach(k=>{
+    G.candles[k].push({...G.lc[k],t:Date.now()});
+    if(G.candles[k].length>80)G.candles[k].shift();
+    const no=G.lc[k].c;
+    G.lc[k]={o:no,h:no,l:no,c:no,v:0,t:Date.now()};
+  });
+},60000);
+
+// ── Onboarding ───────────────────────────────────────────
+let selAvatar=localStorage.getItem('at_av')||'💧';
+function selAv(btn,av){
+  document.querySelectorAll('.av-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');selAvatar=av;
 }
-function completeOnboarding() {
-  const nameInput = $('name-input').value.trim();
-  if (!nameInput) { toast('Inserisci un nome!', 'var(--red)'); return; }
-  G.name = nameInput.slice(0,20);
-  G.avatar = selectedAvatar;
-  localStorage.setItem('bc_name', G.name);
-  localStorage.setItem('bc_avatar', G.avatar);
-  localStorage.setItem('bc_onboarded', '1');
-  wsend({ type:'set_profile', name:G.name, avatar:G.avatar });
-  showScreen('home');
-  updateHomeProfile();
-  wsend({ type:'join_public' });
+function finishOnboard(){
+  const n=$('ob-name').value.trim();
+  if(!n){toast('Inserisci un nome!','var(--red)');return;}
+  G.name=n;G.avatar=selAvatar;
+  localStorage.setItem('at_name',G.name);
+  localStorage.setItem('at_av',G.avatar);
+  localStorage.setItem('at_ok','1');
+  wsend({type:'set_profile',name:G.name,avatar:G.avatar});
+  wsend({type:'join_public'});
+  showScreen('home');updHomeProfile();
 }
 
-// ── HOME ─────────────────────────────────────────────────
-function updateHomeProfile() {
-  $('home-av').textContent = G.avatar;
-  $('home-name').textContent = G.name;
-  $('home-pnl').textContent = fmtP(G.pnl)+' BEE';
-  $('home-pnl').style.color = clr(G.pnl);
-  $('home-wallet').textContent = `🐝 ${fmt(G.wallet)}`;
+// ── Home ─────────────────────────────────────────────────
+function updHomeProfile(){
+  $('h-av').textContent=G.avatar;
+  $('h-name').textContent=G.name;
+  $('h-wallet').textContent=fmt(G.wallet)+' BEE';
+  const pe=$('h-pnl');pe.textContent=fmtP(G.pnl)+' BEE';pe.style.color=clr(G.pnl);
 }
-
-function renderLeaderboard() {
-  const el = $('home-leaderboard'); if (!el) return;
-  el.innerHTML = G.leaderboard.slice(0,5).map((p,i) => `
+function renderHomeLB(){renderLB();}
+function renderLB(){
+  const el=$('h-lb');if(!el)return;
+  el.innerHTML=G.lb.slice(0,5).map((p,i)=>`
     <div class="lb-row">
       <div class="lb-rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</div>
-      <div style="font-size:20px">${p.avatar||'🐝'}</div>
-      <div class="lb-name">${p.name}${p.id===G.playerId?' (tu)':''}</div>
-      <div class="lb-val" style="color:${clr(p.pnl)}">${fmtP(p.pnl||0)}</div>
+      <div class="lb-av">${p.avatar||'💧'}</div>
+      <div class="lb-name">${p.name}${p.id===G.pid?' (tu)':''}</div>
+      <div class="lb-pnl" style="color:${clr(p.pnl||0)}">${fmtP(p.pnl||0)}</div>
     </div>`).join('');
 }
 
-function renderOnlinePlayers() {
-  const el = $('home-players'); if (!el) return;
-  el.innerHTML = G.onlinePlayers.slice(0,6).map(p => `
-    <div class="player-row">
-      <div class="player-av">${p.avatar||'🐝'}</div>
-      <div class="player-info">
-        <div class="player-name">${p.name}</div>
-        <div class="player-stats">${fmt(p.wallet)} BEE</div>
-      </div>
-      <div class="player-pnl" style="color:${clr(p.pnl||0)}">${fmtP(p.pnl||0)}</div>
-    </div>`).join('');
-}
-
-function joinPublicLobby() {
-  wsend({ type:'join_public' });
+function joinPublic(){
+  wsend({type:'join_public'});
   showScreen('game');
-  G.matchActive = false;
-  renderWatchlist(); renderPositions(); renderIngamePlayers();
-  $('g-timer').textContent = 'FREE';
-  $('g-timer').style.color = 'var(--muted)';
-  toast('Sei entrato nella lobby pubblica 🌍', 'var(--blue)');
+  G.matchEnd=null;
+  $('g-timer').textContent='FREE';
+  $('g-timer').style.color='var(--muted)';
+  renderWL();renderPos();renderRank();
+}
+function goGame(){joinPublic();}
+function goHome(){
+  G.room=null;G.isHost=false;clearInterval(G.timerIv);
+  wsend({type:'join_public'});
+  showScreen('home');updHomeProfile();
 }
 
-// ── STANZA ────────────────────────────────────────────────
-function renderRoom() {
-  if (!G.room) return;
-  const { code, players, mode, maxPlayers } = G.room;
-  $('room-code-badge').textContent = code;
-  $('room-title').textContent = G.isHost ? 'La tua stanza' : 'Stanza di '+players.find(p=>p.isHost)?.name;
-  $('room-subtitle').textContent = `${mode} · ${players.length}/${maxPlayers} giocatori`;
-  $('room-share-code').textContent = code;
-  $('room-player-count').textContent = players.length;
-
-  // Griglia giocatori
-  const grid = $('room-players-grid');
-  let html = players.map(p => `
-    <div class="room-player-card${p.isHost?' host':''}">
-      <div class="room-player-av">${p.avatar||'🐝'}</div>
-      <div class="room-player-name">${p.name}${p.id===G.playerId?' (tu)':''}</div>
-      <div class="room-player-status">● Online</div>
+// ── Stanza ───────────────────────────────────────────────
+function renderRoom(){
+  if(!G.room)return;
+  const{code,players,mode,maxPlayers}=G.room;
+  $('room-code-pill').textContent=code;
+  $('share-code').textContent=code;
+  $('room-title').textContent=G.isHost?'La tua stanza':'Stanza di '+( players.find(p=>p.isHost)?.name||'—');
+  $('room-sub').textContent=mode+' · '+players.length+'/'+maxPlayers+' giocatori';
+  $('room-p-count').textContent=players.length;
+  let html=players.map(p=>`
+    <div class="room-p-card${p.isHost?' host':''}">
+      <div class="room-p-av">${p.avatar||'💧'}</div>
+      <div class="room-p-name">${p.name}${p.id===G.pid?' (tu)':''}</div>
     </div>`).join('');
-  // Slot vuoti
-  const empty = maxPlayers - players.length;
-  for (let i=0;i<Math.min(empty,4);i++) html += `<div class="empty-slot">Slot libero</div>`;
-  grid.innerHTML = html;
-
-  // Controlli host
-  $('room-options-section').style.display = G.isHost ? 'block' : 'none';
-  $('room-guest-section').style.display   = G.isHost ? 'none'  : 'block';
-
-  // Start button
-  const startBtn = $('start-match-btn');
-  if (startBtn) {
-    startBtn.disabled = players.length < 2;
-    startBtn.textContent = players.length < 2
-      ? 'In attesa di almeno 2 giocatori...'
-      : `🚀 Avvia partita (${players.length} giocatori)`;
-  }
+  for(let i=0;i<Math.min(maxPlayers-players.length,4);i++)html+=`<div class="empty-slot">Slot libero</div>`;
+  $('room-grid').innerHTML=html;
+  $('room-host-opts').style.display=G.isHost?'block':'none';
+  $('room-guest-msg').style.display=G.isHost?'none':'block';
+  const sb=$('start-btn');
+  if(sb){sb.disabled=players.length<2;sb.textContent=players.length<2?'In attesa di almeno 2 giocatori...':'🚀 Avvia partita ('+players.length+' giocatori)';}
+}
+function copyCode(){navigator.clipboard?.writeText(G.room?.code||'').then(()=>toast('Codice copiato! 📋','var(--gold)'));}
+function leaveRoom(){wsend({type:'leave_room'});G.room=null;G.isHost=false;showScreen('home');}
+function startMatch(){
+  const mode=$('r-mode')?.value||'tournament';
+  const max=parseInt($('r-max')?.value)||8;
+  const dur=mode==='race'?180000:mode==='free'?600000:300000;
+  wsend({type:'start_match',mode,maxPlayers:max,duration:dur});
 }
 
-function copyRoomCode() {
-  const code = G.room?.code || '';
-  navigator.clipboard?.writeText(code).then(() => toast('Codice copiato! 📋', 'var(--gold)'));
+// ── Game UI ──────────────────────────────────────────────
+function gTab(t){
+  document.querySelectorAll('.g-tab').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.g-panel').forEach(p=>p.classList.remove('on'));
+  $('gt-'+t)?.classList.add('on');
+  $('gp-'+t)?.classList.add('on');
+  if(t==='market')renderWL();
+  if(t==='pos')renderPos();
+  if(t==='rank')renderRank();
+  if(t==='chat')renderChat();
+  if(t==='chart'){resCV();drawCV();}
 }
 
-function startMatch() {
-  const mode     = $('room-mode-sel')?.value || 'tournament';
-  const maxP     = parseInt($('room-max-sel')?.value) || 8;
-  const duration = mode==='race'?180000 : mode==='free'?600000 : 300000;
-  wsend({ type:'start_match', mode, maxPlayers:maxP, duration });
+function updGameBar(){
+  $('g-wallet').textContent=fmt(G.wallet)+' BEE';
+  const pe=$('g-pnl');pe.textContent=fmtP(G.pnl);pe.style.color=clr(G.pnl);
+  $('h-wallet').textContent=fmt(G.wallet)+' BEE';
 }
 
-function leaveRoom() {
-  wsend({ type:'leave_room' });
-  G.room = null; G.isHost = false;
-  showScreen('home');
-  wsend({ type:'join_public' });
+function startTimer(){
+  clearInterval(G.timerIv);
+  G.timerIv=setInterval(()=>{
+    if(!G.matchEnd)return;
+    const left=Math.max(0,G.matchEnd-Date.now());
+    const m=Math.floor(left/60000),s=Math.floor((left%60000)/1000);
+    const el=$('g-timer');
+    el.textContent=m+':'+(s+'').padStart(2,'0');
+    el.className='g-timer'+(left<30000?' danger':'');
+    if(!left)clearInterval(G.timerIv);
+  },1000);
 }
 
-// ── GAME UI ───────────────────────────────────────────────
-function showGameTab(tab) {
-  document.querySelectorAll('.game-tab').forEach(t => t.classList.remove('on'));
-  document.querySelectorAll('.game-panel').forEach(p => p.classList.remove('active'));
-  $('gtab-'+tab)?.classList.add('on');
-  $('gpanel-'+tab)?.classList.add('active');
-  if (tab==='market') renderWatchlist();
-  if (tab==='pos') renderPositions();
-  if (tab==='players') renderIngamePlayers();
-  if (tab==='chat') renderChat();
-  if (tab==='chart') { resizeCanvas(); drawChart(); }
+// ── Watchlist ────────────────────────────────────────────
+function filterWL(v){G.wlF=v.toUpperCase();renderWL();}
+function renderWL(){
+  const el=$('wl-list');if(!el)return;
+  el.innerHTML=TK.filter(k=>!G.wlF||k.includes(G.wlF)||STOCKS[k].name.toUpperCase().includes(G.wlF)).map(k=>{
+    const p=G.prices[k]||STOCKS[k].base,chg=(p-STOCKS[k].base)/STOCKS[k].base*100,inP=G.portfolio[k]?.qty>0;
+    const bars=Array.from({length:10},()=>`<div style="width:3px;height:${4+Math.random()*14}px;background:${chg>=0?'#0ECB81':'#F6465D'};opacity:.7;border-radius:1px"></div>`).join('');
+    return `<div class="wl-item${k===G.cur?' on':''}" onclick="selTk('${k}')">
+      <div class="wl-bar" style="background:${STOCKS[k].color}"></div>
+      <div class="wl-info">
+        <div class="wl-sym">${k}${inP?` <span style="color:var(--green);font-size:9px">●</span>`:''}</div>
+        <div class="wl-name">${STOCKS[k].name}</div>
+        <div class="wl-spark">${bars}</div>
+      </div>
+      <div class="wl-r">
+        <div class="wl-price">${p.toFixed(2)}</div>
+        <div class="wl-chg" style="color:${clr(chg)}">${(chg>=0?'+':'')+chg.toFixed(2)}%</div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-function updateGameTopbar() {
-  $('g-wallet').textContent = fmt(G.wallet)+' BEE';
-  const pnlEl = $('g-pnl');
-  pnlEl.textContent = fmtP(G.pnl);
-  pnlEl.style.color = clr(G.pnl);
-  $('home-wallet').textContent = `🐝 ${fmt(G.wallet)}`;
+function selTk(k){
+  G.cur=k;renderWL();updChartHdr();drawCV();
+  $('t-sym').textContent=k;$('t-px').textContent=(G.prices[k]||STOCKS[k].base).toFixed(2);
+  $('t-exec').textContent=(G.side==='buy'?'BUY ':'SELL ')+k;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.k===k));
+  updSumm();
 }
 
-function startGameTimer() {
-  clearInterval(G.timerInterval);
-  G.timerInterval = setInterval(() => {
-    if (!G.matchEndTime) return;
-    const left = Math.max(0, G.matchEndTime - Date.now());
-    const mins = Math.floor(left/60000);
-    const secs = Math.floor((left%60000)/1000);
-    const el = $('g-timer');
-    el.textContent = `${mins}:${secs.toString().padStart(2,'0')}`;
-    el.className = 'game-timer' + (left<30000?' danger':'');
-    if (left === 0) clearInterval(G.timerInterval);
-  }, 1000);
+function renderTradeChips(){
+  const el=$('t-chips');if(!el)return;
+  el.innerHTML=TK.map(k=>`<button class="chip${k===G.cur?' on':''}" data-k="${k}" onclick="selTk('${k}')">${k}</button>`).join('');
 }
 
-// ── WATCHLIST ────────────────────────────────────────────
-function filterWL(v) { G.wlFilter = v.toUpperCase(); renderWatchlist(); }
-
-function renderWatchlist() {
-  const el = $('wl-list'); if (!el) return;
-  el.innerHTML = TK.filter(k => !G.wlFilter || k.includes(G.wlFilter) || STOCKS[k].name.toUpperCase().includes(G.wlFilter))
-    .map(k => {
-      const s = STOCKS[k], p = G.prices[k]||s.base, chg=(p-s.base)/s.base*100;
-      const inPos = G.portfolio[k]?.qty > 0;
-      const bars = Array.from({length:10},()=>`<div style="width:3px;height:${4+Math.random()*14}px;background:${chg>=0?'#0ECB81':'#F6465D'};opacity:.7;border-radius:1px"></div>`).join('');
-      return `<div class="wl-item${k===G.curTicker?' sel':''}" onclick="selectTicker('${k}')">
-        <div class="wl-color" style="background:${s.color}"></div>
-        <div class="wl-info">
-          <div class="wl-sym">${k}${inPos?` <span style="color:var(--green);font-size:9px">●</span>`:''}  </div>
-          <div class="wl-name">${s.name}</div>
-          <div class="wl-spark">${bars}</div>
-        </div>
-        <div class="wl-right">
-          <div class="wl-price">${p.toFixed(2)}</div>
-          <div class="wl-chg" style="color:${clr(chg)}">${(chg>=0?'+':'')+chg.toFixed(2)}%</div>
-        </div>
-      </div>`;
-    }).join('');
+// ── Trade ────────────────────────────────────────────────
+function setSide(s){
+  G.side=s;
+  $('tb-buy').className ='side-btn '+(s==='buy' ?'sb-buy-on':'sb-off');
+  $('tb-sell').className='side-btn '+(s==='sell'?'sb-sell-on':'sb-off');
+  const ex=$('t-exec');ex.className=s==='buy'?'exec-buy':'exec-sell';ex.textContent=(s==='buy'?'BUY ':'SELL ')+G.cur;
+  updSumm();
+}
+function setPct(p){
+  const av=G.side==='buy'?G.wallet:(G.portfolio[G.cur]?.qty||0);
+  const pr=G.prices[G.cur]||STOCKS[G.cur].base;
+  const q=G.side==='buy'?Math.max(10,Math.floor(av*p/100/pr)):Math.max(10,Math.floor(av*p/100));
+  $('t-qty').value=q;updSumm();
+}
+function updSumm(){
+  const q=parseInt($('t-qty')?.value)||0,pr=G.prices[G.cur]||STOCKS[G.cur].base;
+  const tot=Math.round(pr*q),fee=Math.round(tot*.001);
+  const ts=$('ts-tot'),tf=$('ts-fee'),ta=$('ts-av');
+  if(ts)ts.textContent=fmt(tot)+' BEE';
+  if(tf)tf.textContent=fmt(fee)+' BEE';
+  if(ta){ta.textContent=fmt(G.wallet)+' BEE';ta.style.color=G.wallet>=tot+fee?'var(--green)':'var(--red)';}
+  $('t-px').textContent=pr.toFixed(2);
+}
+function execTrade(){
+  const q=parseInt($('t-qty')?.value)||0;
+  if(q<10){toast('Quantità minima: 10','var(--red)');return;}
+  wsend({type:'trade',side:G.side,ticker:G.cur,qty:q});
 }
 
-function selectTicker(k) {
-  G.curTicker = k;
-  renderWatchlist();
-  updateChartHeader();
-  drawChart();
-  // Aggiorna trade tab
-  $('t-cur-sym').textContent = k;
-  $('t-cur-price').textContent = (G.prices[k]||STOCKS[k].base).toFixed(2);
-  $('t-exec-btn').textContent = G.tradeSide==='buy'?`BUY ${k}`:`SELL ${k}`;
-  document.querySelectorAll('.trade-stock-chip').forEach(c=>{c.classList.toggle('sel',c.dataset.tk===k);});
-  updateTradeSummary();
-}
-
-function renderTradeChips() {
-  const el = $('trade-chips'); if (!el) return;
-  el.innerHTML = TK.map(k=>`<button class="trade-stock-chip${k===G.curTicker?' sel':''}" data-tk="${k}" onclick="selectTicker('${k}')">${k}</button>`).join('');
-}
-
-// ── TRADE ────────────────────────────────────────────────
-function setTradeSide(s) {
-  G.tradeSide = s;
-  const buyBtn = $('t-buy-btn'), sellBtn = $('t-sell-btn'), exec = $('t-exec-btn');
-  buyBtn.className  = 'side-btn '+(s==='buy'?'buy-on':'buy-off');
-  sellBtn.className = 'side-btn '+(s==='sell'?'sell-on':'sell-off');
-  exec.className    = s==='buy'?'exec-btn-buy':'exec-btn-sell';
-  exec.textContent  = (s==='buy'?'BUY ':'SELL ')+G.curTicker;
-  updateTradeSummary();
-}
-
-function setTradePct(pct) {
-  const avail = G.tradeSide==='buy' ? G.wallet : (G.portfolio[G.curTicker]?.qty||0);
-  const pr    = G.prices[G.curTicker]||STOCKS[G.curTicker].base;
-  const qty   = G.tradeSide==='buy' ? Math.max(10,Math.floor(avail*pct/100/pr)) : Math.max(10,Math.floor(avail*pct/100));
-  $('t-qty').value = qty;
-  updateTradeSummary();
-}
-
-function updateTradeSummary() {
-  const qty   = parseInt($('t-qty')?.value)||0;
-  const pr    = G.prices[G.curTicker]||STOCKS[G.curTicker].base;
-  const total = Math.round(pr*qty);
-  const fee   = Math.round(total*.001);
-  const ts    = $('ts-total'), tf=$('ts-fee'), ta=$('ts-avail');
-  if(ts) ts.textContent = fmt(total)+' BEE';
-  if(tf) tf.textContent = fmt(fee)+' BEE';
-  if(ta){ ta.textContent = fmt(G.wallet)+' BEE'; ta.style.color = G.wallet>=total+fee?'var(--gold)':'var(--red)'; }
-}
-
-function executeTrade() {
-  const qty = parseInt($('t-qty')?.value)||0;
-  if (qty<10) { toast('Quantità minima: 10','var(--red)'); return; }
-  wsend({ type:'trade', side:G.tradeSide, ticker:G.curTicker, qty });
-}
-
-// ── POSITIONS ─────────────────────────────────────────────
-function renderPositions() {
-  const el = $('pos-list'); if (!el) return;
-  const pos = Object.entries(G.portfolio).filter(([,v])=>v.qty>0);
-  if (!pos.length) {
-    el.innerHTML = `<div style="padding:30px;text-align:center;color:var(--muted);font-size:13px">Nessuna posizione aperta.<br>Vai alla tab Trade per comprare!</div>`;
-    return;
-  }
-  el.innerHTML = pos.map(([k,v])=>{
-    const p=G.prices[k]||STOCKS[k].base, pnl=(p-v.avg)*v.qty, pct=((p-v.avg)/v.avg*100);
+// ── Positions ────────────────────────────────────────────
+function renderPos(){
+  const el=$('pos-list');if(!el)return;
+  const pos=Object.entries(G.portfolio).filter(([,v])=>v.qty>0);
+  if(!pos.length){el.innerHTML='<div style="padding:30px;text-align:center;color:var(--muted);font-size:13px">Nessuna posizione.<br>Vai su Trade per comprare!</div>';return;}
+  el.innerHTML=pos.map(([k,v])=>{
+    const p=G.prices[k]||STOCKS[k].base,pnl=(p-v.avg)*v.qty,pct=((p-v.avg)/v.avg*100);
     return `<div class="pos-card">
-      <div class="pos-card-top">
+      <div class="pos-top">
         <div><span class="pos-sym" style="color:${STOCKS[k].color}">${k}</span><span class="pos-side">LONG</span></div>
         <div><div class="pos-pnl" style="color:${clr(pnl)}">${fmtP(pnl|0)}</div><div class="pos-pct" style="color:${clr(pct)}">${(pct>=0?'+':'')+pct.toFixed(2)}%</div></div>
       </div>
-      <div class="pos-detail">${fmt(v.qty)} qty @ avg ${v.avg.toFixed(2)} · Ora: ${p.toFixed(2)}</div>
+      <div class="pos-det">${fmt(v.qty)} qty @ avg ${v.avg.toFixed(2)} · Ora: ${p.toFixed(2)}</div>
       <div class="pos-bar"><div class="pos-bar-fill" style="width:${Math.min(100,Math.max(0,50+pct*3))}%;background:${clr(pnl)}"></div></div>
-      <button class="close-btn" onclick="closePosition('${k}')">Chiudi posizione</button>
+      <button class="close-btn" onclick="closePos('${k}')">Chiudi posizione</button>
     </div>`;
   }).join('');
 }
+function closePos(k){const pos=G.portfolio[k];if(pos?.qty)wsend({type:'trade',side:'sell',ticker:k,qty:pos.qty});}
 
-function closePosition(ticker) {
-  const pos = G.portfolio[ticker];
-  if (!pos||!pos.qty) return;
-  wsend({ type:'trade', side:'sell', ticker, qty:pos.qty });
-}
-
-// ── IN-GAME PLAYERS ────────────────────────────────────────
-function renderIngamePlayers() {
-  const el = $('ingame-players'); if (!el) return;
-  const list = G.leaderboard;
-  if (!list.length) { el.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">In attesa di dati classifica...</div>'; return; }
-  el.innerHTML = list.map((p,i)=>`
-    <div class="ingame-player">
-      <div class="ingame-rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</div>
-      <div class="ingame-av">${p.avatar||'🐝'}</div>
-      <div class="ingame-info">
-        <div class="ingame-name">${p.name}${p.id===G.playerId?' (tu)':''}</div>
-        <div class="ingame-sub">Lv.${p.level||1} · ${fmt(p.wallet||50000)} wallet</div>
+// ── Rank ─────────────────────────────────────────────────
+function renderRank(){
+  const el=$('rank-list');if(!el)return;
+  if(!G.lb.length){el.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">In attesa dati...</div>';return;}
+  el.innerHTML=G.lb.map((p,i)=>`
+    <div class="rank-row">
+      <div class="rank-pos">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</div>
+      <div class="rank-av">${p.avatar||'💧'}</div>
+      <div class="rank-info">
+        <div class="rank-name">${p.name}${p.id===G.pid?' (tu)':''}</div>
+        <div class="rank-sub">${fmt(p.wallet||50000)} wallet</div>
       </div>
-      <div class="ingame-val">
-        <div class="ingame-total">${fmt((p.wallet||50000)+(p.pnl||0))}</div>
-        <div class="ingame-pnl" style="color:${clr(p.pnl||0)}">${fmtP(p.pnl||0)}</div>
-      </div>
+      <div class="rank-total" style="color:${clr(p.pnl||0)}">${fmtP(p.pnl||0)}</div>
     </div>`).join('');
 }
 
-// ── CHAT ──────────────────────────────────────────────────
-function renderChat() {
-  const el = $('chat-msgs'); if (!el) return;
-  el.innerHTML = G.chat.slice(-30).map(m => {
-    if (m.sys) return `<div class="chat-msg-sys">${m.text}</div>`;
-    const isMe = m.playerId===G.playerId;
-    return `<div style="display:flex;flex-direction:${isMe?'row-reverse':'row'};align-items:flex-end;gap:6px">
-      <div style="font-size:18px;flex-shrink:0">${m.avatar||'🐝'}</div>
+// ── Chat ─────────────────────────────────────────────────
+function addChat(m){G.chat.push(m);if(G.screen==='game')renderChat();}
+function renderChat(){
+  const el=$('chat-msgs');if(!el)return;
+  el.innerHTML=G.chat.slice(-30).map(m=>{
+    if(m.sys)return `<div class="chat-sys">${m.text}</div>`;
+    const me=m.playerId===G.pid;
+    return `<div style="display:flex;flex-direction:${me?'row-reverse':'row'};align-items:flex-end;gap:6px">
+      <div style="font-size:18px;flex-shrink:0">${m.avatar||'💧'}</div>
       <div style="max-width:75%">
-        ${!isMe?`<div class="chat-name">${m.name}</div>`:''}
-        <div class="chat-bubble ${isMe?'me':'other'}">${m.text}</div>
+        ${!me?`<div class="chat-from">${m.name}</div>`:''}
+        <div class="bubble ${me?'me':'other'}">${m.text}</div>
       </div>
     </div>`;
   }).join('');
-  el.scrollTop = el.scrollHeight;
+  el.scrollTop=el.scrollHeight;
+}
+function sendChat(){
+  const inp=$('chat-inp');if(!inp)return;
+  const t=inp.value.trim();if(!t)return;
+  wsend({type:G.room?'chat_room':'chat_global',text:t});
+  inp.value='';
 }
 
-function sendChat() {
-  const inp = $('chat-inp');
-  const text = inp.value.trim();
-  if (!text) return;
-  const type = G.room ? 'chat_room' : 'chat_global';
-  wsend({ type, text });
-  inp.value = '';
+// ── Chart ────────────────────────────────────────────────
+let cv,ctx;
+function initCV(){
+  cv=$('cv');ctx=cv?.getContext('2d');resCV();
+  window.addEventListener('resize',resCV);
 }
-
-// ── CHART ─────────────────────────────────────────────────
-let chartCv, chartCtx;
-function initChart() {
-  chartCv = $('chart-canvas');
-  chartCtx = chartCv?.getContext('2d');
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
+function resCV(){
+  if(!cv)return;
+  const p=cv.parentElement;if(!p)return;
+  cv.width=p.clientWidth;cv.height=p.clientHeight;
 }
-
-function resizeCanvas() {
-  if (!chartCv) return;
-  const p = chartCv.parentElement;
-  if (!p) return;
-  chartCv.width = p.clientWidth;
-  chartCv.height = p.clientHeight;
+function updChartHdr(){
+  const k=G.cur,p=G.prices[k]||STOCKS[k].base,chg=(p-STOCKS[k].base)/STOCKS[k].base*100,lc=G.lc[k];
+  $('c-sym').textContent=k;$('c-sym').style.color=STOCKS[k].color;
+  $('c-price').textContent=p.toFixed(2);$('c-price').style.color=clr(chg);
+  const ce=$('c-chg');ce.textContent=(chg>=0?'+':'')+chg.toFixed(2)+'%';
+  ce.style.background=chg>=0?'rgba(14,203,129,.12)':'rgba(246,70,93,.12)';ce.style.color=clr(chg);
+  if(lc){$('c-o').textContent=lc.o.toFixed(2);$('c-h').textContent=lc.h.toFixed(2);$('c-l').textContent=lc.l.toFixed(2);$('c-v').textContent=fmt(lc.v|0);}
 }
-
-function updateChartHeader() {
-  const k=G.curTicker, p=G.prices[k]||STOCKS[k].base, chg=(p-STOCKS[k].base)/STOCKS[k].base*100;
-  const lcc=G.lc[k];
-  $('c-sym').textContent  = k;
-  $('c-sym').style.color  = STOCKS[k].color;
-  $('c-price').textContent= p.toFixed(2);
-  $('c-price').style.color= clr(chg);
-  const ce=$('c-chg');
-  ce.textContent=(chg>=0?'+':'')+chg.toFixed(2)+'%';
-  ce.style.background=chg>=0?'rgba(14,203,129,.12)':'rgba(246,70,93,.12)';
-  ce.style.color=clr(chg);
-  if(lcc){ $('c-open').textContent=lcc.o.toFixed(2); $('c-high').textContent=lcc.h.toFixed(2); $('c-low').textContent=lcc.l.toFixed(2); $('c-vol').textContent=fmt(lcc.v|0); }
-}
-
-function drawChart() {
-  if (!chartCtx||!chartCv) return;
-  const W=chartCv.width,H=chartCv.height;
-  if(!W||!H)return;
-  chartCtx.fillStyle='#0B0E11';chartCtx.fillRect(0,0,W,H);
-  const k=G.curTicker;
-  const data=[...(G.candles[k]||[]),G.lc[k]].filter(Boolean).slice(-50);
+function drawCV(){
+  if(!ctx||!cv)return;
+  const W=cv.width,H=cv.height;if(!W||!H)return;
+  ctx.fillStyle='#0B0E11';ctx.fillRect(0,0,W,H);
+  const k=G.cur,data=[...G.candles[k],G.lc[k]].filter(Boolean).slice(-50);
   if(data.length<2)return;
   const ap=data.flatMap(c=>[c.h,c.l]),hi=Math.max(...ap),lo=Math.min(...ap),range=hi-lo||.01;
-  const pL=0,pR=50,pT=10,pB=30,ch=H-pT-pB,cw=(W-pL-pR)/data.length;
+  const pL=0,pR=52,pT=10,pB=28,ch=H-pT-pB,cw=(W-pL-pR)/data.length;
   const py=p=>pT+ch-(p-lo)/range*ch;
   // Grid
-  chartCtx.strokeStyle='#1C2333';chartCtx.lineWidth=.5;
-  for(let i=0;i<=4;i++){const y=pT+ch/4*i;chartCtx.beginPath();chartCtx.moveTo(0,y);chartCtx.lineTo(W-pR,y);chartCtx.stroke();chartCtx.fillStyle='#3A4155';chartCtx.font='9px monospace';chartCtx.textAlign='left';chartCtx.fillText((hi-range/4*i).toFixed(2),W-pR+2,y+3);}
+  ctx.strokeStyle='#1C2333';ctx.lineWidth=.5;
+  for(let i=0;i<=4;i++){const y=pT+ch/4*i;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W-pR,y);ctx.stroke();ctx.fillStyle='#3A4155';ctx.font='9px monospace';ctx.textAlign='left';ctx.fillText((hi-range/4*i).toFixed(2),W-pR+2,y+3);}
   // Volume
   const maxV=Math.max(...data.map(c=>c.v))||1;
-  data.forEach((c,i)=>{const x=pL+i*cw,vh=Math.max(1,(c.v/maxV)*(pB-4));chartCtx.fillStyle=c.c>=c.o?'rgba(14,203,129,.18)':'rgba(246,70,93,.18)';chartCtx.fillRect(x+cw*.1,H-pB,cw*.8,-vh);});
-  // SMA
+  data.forEach((c,i)=>{const x=pL+i*cw,vh=Math.max(1,(c.v/maxV)*(pB-4));ctx.fillStyle=c.c>=c.o?'rgba(14,203,129,.18)':'rgba(246,70,93,.18)';ctx.fillRect(x+cw*.1,H-pB,cw*.8,-vh);});
+  // SMA20
   const cls=data.map(c=>c.c);
-  if(cls.length>=20){chartCtx.strokeStyle='rgba(240,185,11,.6)';chartCtx.lineWidth=1;chartCtx.setLineDash([3,3]);chartCtx.beginPath();data.forEach((c,i)=>{if(i<19)return;const sma=cls.slice(i-19,i+1).reduce((a,b)=>a+b,0)/20;i===19?chartCtx.moveTo(pL+i*cw+cw/2,py(sma)):chartCtx.lineTo(pL+i*cw+cw/2,py(sma));});chartCtx.stroke();chartCtx.setLineDash([]);}
+  if(cls.length>=20){ctx.strokeStyle='rgba(240,185,11,.6)';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();data.forEach((c,i)=>{if(i<19)return;const sma=cls.slice(i-19,i+1).reduce((a,b)=>a+b)/20;i===19?ctx.moveTo(pL+i*cw+cw/2,py(sma)):ctx.lineTo(pL+i*cw+cw/2,py(sma));});ctx.stroke();ctx.setLineDash([]);}
   // Candles
-  data.forEach((c,i)=>{const x=pL+i*cw,mid=x+cw/2,up=c.c>=c.o;chartCtx.strokeStyle=up?'#0ECB81':'#F6465D';chartCtx.lineWidth=1;chartCtx.beginPath();chartCtx.moveTo(mid,py(c.h));chartCtx.lineTo(mid,py(c.l));chartCtx.stroke();chartCtx.fillStyle=up?'#0ECB81':'#F6465D';chartCtx.fillRect(x+cw*.12,Math.min(py(c.o),py(c.c)),cw*.76,Math.max(1,Math.abs(py(c.o)-py(c.c))));});
+  data.forEach((c,i)=>{const x=pL+i*cw,mid=x+cw/2,up=c.c>=c.o;ctx.strokeStyle=up?'#0ECB81':'#F6465D';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(mid,py(c.h));ctx.lineTo(mid,py(c.l));ctx.stroke();ctx.fillStyle=up?'#0ECB81':'#F6465D';ctx.fillRect(x+cw*.12,Math.min(py(c.o),py(c.c)),cw*.76,Math.max(1,Math.abs(py(c.o)-py(c.c))));});
   // Last price
-  const lp=G.prices[k]||STOCKS[k].base,lpy=py(lp),chg=(lp-STOCKS[k].base)/STOCKS[k].base;
-  chartCtx.setLineDash([4,4]);chartCtx.strokeStyle=chg>=0?'rgba(14,203,129,.5)':'rgba(246,70,93,.5)';chartCtx.lineWidth=.8;chartCtx.beginPath();chartCtx.moveTo(0,lpy);chartCtx.lineTo(W-pR,lpy);chartCtx.stroke();chartCtx.setLineDash([]);
-  chartCtx.fillStyle=chg>=0?'#0ECB81':'#F6465D';chartCtx.fillRect(W-pR,lpy-8,pR-2,16);chartCtx.fillStyle='#000';chartCtx.font='bold 9px monospace';chartCtx.textAlign='center';chartCtx.fillText(lp.toFixed(2),W-pR+(pR-2)/2,lpy+3.5);
-  // Time
-  chartCtx.fillStyle='#3A4155';chartCtx.font='8px monospace';chartCtx.textAlign='center';data.forEach((c,i)=>{if(i%10===0){const x=pL+i*cw+cw/2;chartCtx.fillText(new Date(c.t).toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'}),x,H-pB+12);}});
+  const lp=G.prices[k]||STOCKS[k].base,lpy=py(lp),chg2=(lp-STOCKS[k].base)/STOCKS[k].base;
+  ctx.setLineDash([4,4]);ctx.strokeStyle=chg2>=0?'rgba(14,203,129,.5)':'rgba(246,70,93,.5)';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(0,lpy);ctx.lineTo(W-pR,lpy);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle=chg2>=0?'#0ECB81':'#F6465D';ctx.fillRect(W-pR,lpy-8,pR-2,16);ctx.fillStyle='#000';ctx.font='bold 9px monospace';ctx.textAlign='center';ctx.fillText(lp.toFixed(2),W-pR+(pR-2)/2,lpy+3.5);
   // Indicators
-  updateChartIndicators(cls);
-}
-
-function updateChartIndicators(cls) {
   if(cls.length>=15){let g=0,l=0;for(let i=1;i<=14;i++){const d=cls.at(-i)-cls.at(-i-1);d>0?g+=d:l-=d;}const rs=g/Math.max(l,.001),rsi=100-100/(1+rs);const e=$('i-rsi');if(e){e.textContent=rsi.toFixed(1);e.style.color=rsi>70?'#F6465D':rsi<30?'#0ECB81':'var(--text)';}}
-  if(cls.length>=20){const sma=cls.slice(-20).reduce((a,b)=>a+b,0)/20;const e=$('i-sma');if(e){e.textContent=sma.toFixed(2);e.style.color=cls.at(-1)>sma?'#0ECB81':'#F6465D';}}
-  if(cls.length>=26){const e12=cls.slice(-12).reduce((a,b)=>a+b)/12,e26=cls.slice(-26).reduce((a,b)=>a+b)/26,m=e12-e26;const e=$('i-macd');if(e){e.textContent=(m>=0?'+':'')+m.toFixed(3);e.style.color=m>=0?'#0ECB81':'#F6465D';}}
+  if(cls.length>=20){const sma=cls.slice(-20).reduce((a,b)=>a+b)/20;const e=$('i-sma');if(e){e.textContent=sma.toFixed(2);e.style.color=cls.at(-1)>sma?'#0ECB81':'#F6465D';}}
+  if(cls.length>=26){const e12=cls.slice(-12).reduce((a,b)=>a+b)/12,e26=cls.slice(-26).reduce((a,b)=>a+b)/26,mac=e12-e26;const e=$('i-macd');if(e){e.textContent=(mac>=0?'+':'')+mac.toFixed(3);e.style.color=mac>=0?'#0ECB81':'#F6465D';}}
 }
 
-// Aggiornamento locale candles
-setInterval(() => {
-  TK.forEach(k => {
-    const mv=(Math.random()-.49)*STOCKS[k].base*.004;
-    const np=Math.max(STOCKS[k].base*.55,Math.min(STOCKS[k].base*1.45,(G.lc[k]?.c||STOCKS[k].base)+mv));
-    if(G.lc[k]){G.lc[k].h=Math.max(G.lc[k].h,np);G.lc[k].l=Math.min(G.lc[k].l,np);G.lc[k].c=np;G.lc[k].v+=rnd(30,200)|0;}
-    if(!G.ws||G.ws.readyState!==WebSocket.OPEN) G.prices[k]=np;
-  });
-  if(G.screen==='game'&&$('gpanel-chart').classList.contains('active')) drawChart();
-},2200);
-// Chiudi candle ogni minuto
-setInterval(()=>{TK.forEach(k=>{const lcc=G.lc[k];if(!lcc)return;G.candles[k].push({...lcc,t:Date.now()});if(G.candles[k].length>80)G.candles[k].shift();const no=lcc.c;G.lc[k]={o:no,h:no,l:no,c:no,v:0,t:Date.now()};});},60000);
-
-// ── RISULTATI ─────────────────────────────────────────────
-function showResults(results, winner) {
-  const myResult = results.find(r=>r.id===G.playerId);
-  const myRank   = results.indexOf(myResult)+1;
-  $('r-trophy').textContent  = myRank===1?'🏆':myRank===2?'🥈':myRank===3?'🥉':'📊';
-  $('r-title').textContent   = myRank===1?'Hai vinto! 🎉':`Rank #${myRank}`;
-  $('r-sub').textContent     = winner?`Vincitore: ${winner.avatar} ${winner.name}`:'Partita terminata!';
-  $('results-list').innerHTML= results.map((r,i)=>`
-    <div class="result-row${i===0?' winner':''}">
-      <div class="result-rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</div>
-      <div style="font-size:20px">${r.avatar||'🐝'}</div>
-      <div class="result-name">${r.name}${r.id===G.playerId?' (tu)':''}</div>
-      <div>
-        <div class="result-total" style="color:${clr(r.pnl)}">${fmt(r.total)}</div>
-        <div class="result-pnl" style="color:${clr(r.pnl)}">${fmtP(r.pnl||0)}</div>
+// ── Results ──────────────────────────────────────────────
+function showResults(results,winner){
+  const me=results.find(r=>r.id===G.pid),rank=(results.indexOf(me)+1)||results.length;
+  $('r-trophy').textContent=rank===1?'🏆':rank===2?'🥈':rank===3?'🥉':'📊';
+  $('r-title').textContent=rank===1?'Hai vinto! 🎉':'Rank #'+rank;
+  $('r-sub').textContent=winner?'Vincitore: '+winner.avatar+' '+winner.name:'Partita terminata!';
+  $('r-list').innerHTML=results.map((r,i)=>`
+    <div class="res-row${i===0?' winner':''}">
+      <div style="font-size:16px">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</div>
+      <div style="font-size:20px">${r.avatar||'💧'}</div>
+      <div style="flex:1;font-size:13px;font-weight:600">${r.name}${r.id===G.pid?' (tu)':''}</div>
+      <div style="text-align:right">
+        <div style="font-size:14px;font-weight:700;color:${clr(r.pnl)}">${fmtP(r.pnl||0)}</div>
+        <div style="font-size:11px;color:var(--muted)">${fmt(r.total)} BEE</div>
       </div>
     </div>`).join('');
   showScreen('results');
-  if (myRank===1) sfxLevel();
 }
 
-function goHome() {
-  G.room=null; G.isHost=false; G.matchActive=false;
-  clearInterval(G.timerInterval);
-  wsend({ type:'join_public' });
-  showScreen('home');
-  updateHomeProfile();
-}
-
-// ── MODALS ────────────────────────────────────────────────
-function openModal(type) {
-  const ov=$('modal-overlay'), mc=$('modal-content');
-  if (type==='create_room') {
+// ── Modals ───────────────────────────────────────────────
+function openModal(type){
+  const mc=$('modal-body');
+  if(type==='create'){
     mc.innerHTML=`
-      <div class="modal-title">⚔️ Crea stanza privata</div>
+      <div class="modal-title">⚔️ Crea Stanza Privata</div>
       <div class="modal-sub">Scegli modalità e invia il codice agli amici</div>
-      <div class="trade-label" style="margin-bottom:4px">Modalità</div>
-      <select class="trade-input" id="m-mode" style="margin-bottom:10px;appearance:auto">
-        <option value="tournament">🏆 Torneo (5 min) — chi ha più BEE vince</option>
-        <option value="race">⚡ Race (3 min) — massimo P&L</option>
+      <div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Modalità</div>
+      <select class="inp" id="m-mode" style="appearance:auto">
+        <option value="tournament">🏆 Torneo (5 min)</option>
+        <option value="race">⚡ Race (3 min)</option>
         <option value="free">🎮 Free play (10 min)</option>
-      </select>
-      <div class="trade-label" style="margin-bottom:4px">Max giocatori</div>
-      <select class="trade-input" id="m-max" style="margin-bottom:12px;appearance:auto">
-        <option value="2">2 giocatori</option>
-        <option value="4">4 giocatori</option>
-        <option value="6">6 giocatori</option>
-        <option value="8" selected>8 giocatori</option>
-      </select>
-      <div class="modal-btn-row">
+      </select></div>
+      <div style="margin-bottom:14px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Max giocatori</div>
+      <select class="inp" id="m-max" style="appearance:auto">
+        <option value="2">2</option><option value="4">4</option><option value="6">6</option><option value="8" selected>8</option>
+      </select></div>
+      <div class="modal-row">
         <button class="modal-btn" onclick="closeModal()">Annulla</button>
-        <button class="modal-btn primary" onclick="doCreateRoom()">Crea stanza 🚀</button>
+        <button class="modal-btn pri" onclick="doCreate()">Crea 🚀</button>
       </div>`;
-  } else if (type==='join_room') {
+  } else if(type==='join'){
     mc.innerHTML=`
-      <div class="modal-title">🔑 Entra con codice</div>
-      <div class="modal-sub">Inserisci il codice a 5 lettere della stanza</div>
-      <input class="code-input" id="m-code" placeholder="ABCD1" maxlength="5" autocapitalize="characters">
-      <div class="modal-btn-row">
+      <div class="modal-title">🔑 Entra con Codice</div>
+      <div class="modal-sub">Inserisci il codice a 5 caratteri della stanza</div>
+      <input class="code-inp" id="m-code" placeholder="ABCD1" maxlength="5" autocapitalize="characters">
+      <div class="modal-row">
         <button class="modal-btn" onclick="closeModal()">Annulla</button>
-        <button class="modal-btn primary" onclick="doJoinRoom()">Entra 🚀</button>
+        <button class="modal-btn pri" onclick="doJoin()">Entra 🚀</button>
       </div>`;
     setTimeout(()=>$('m-code')?.focus(),100);
-  } else if (type==='profile') {
+  } else if(type==='profile'){
     mc.innerHTML=`
       <div class="modal-title">✏️ Il tuo profilo</div>
-      <div class="avatar-grid" style="margin-bottom:12px" id="m-av-grid">
-        ${['🐝','🐋','💧','🦈','🚀','🎯','⚡','🔥','💎','👑'].map(av=>`<button class="avatar-btn${G.avatar===av?' sel':''}" onclick="selectModalAvatar(this,'${av}')">${av}</button>`).join('')}
+      <div class="av-grid" style="margin-bottom:12px" id="m-av">
+        ${['💧','🐋','🦈','🚀','⚡','🔥','💎','👑','🎯','🌊'].map(av=>`<button class="av-btn${G.avatar===av?' on':''}" onclick="mSelAv(this,'${av}')">${av}</button>`).join('')}
       </div>
-      <div class="trade-label" style="margin-bottom:4px">Nome</div>
-      <input class="name-input" id="m-name" value="${G.name}" maxlength="20" style="margin-bottom:12px">
-      <div class="modal-btn-row">
+      <input class="inp" id="m-name" value="${G.name}" maxlength="20" style="margin-bottom:14px">
+      <div class="modal-row">
         <button class="modal-btn" onclick="closeModal()">Annulla</button>
-        <button class="modal-btn primary" onclick="saveProfile()">Salva ✅</button>
+        <button class="modal-btn pri" onclick="saveProfile()">Salva ✅</button>
       </div>`;
   }
-  ov.classList.add('open');
+  $('modal-bg').classList.add('on');
 }
-
-function closeModal(e) {
-  if (!e||e.target===$('modal-overlay')) $('modal-overlay').classList.remove('open');
-}
-
-function doCreateRoom() {
-  const mode=document.getElementById('m-mode')?.value||'tournament';
-  const maxP=parseInt(document.getElementById('m-max')?.value)||8;
+function closeModal(){$('modal-bg').classList.remove('on');}
+function doCreate(){
+  const mode=$('m-mode')?.value||'tournament',max=parseInt($('m-max')?.value)||8;
   const dur=mode==='race'?180000:mode==='free'?600000:300000;
-  wsend({ type:'create_room', mode, maxPlayers:maxP, duration:dur });
-  closeModal();
+  wsend({type:'create_room',mode,maxPlayers:max,duration:dur});closeModal();
 }
-
-function doJoinRoom() {
+function doJoin(){
   const code=$('m-code')?.value.trim().toUpperCase();
-  if(!code||code.length<4){toast('Inserisci un codice valido','var(--red)');return;}
-  wsend({ type:'join_room', code });
-  closeModal();
+  if(!code||code.length<4){toast('Codice non valido','var(--red)');return;}
+  wsend({type:'join_room',code});closeModal();
 }
-
-let modalAvatar=null;
-function selectModalAvatar(btn,av){document.querySelectorAll('#m-av-grid .avatar-btn').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');modalAvatar=av;}
+let mAv=null;
+function mSelAv(btn,av){document.querySelectorAll('#m-av .av-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');mAv=av;}
 function saveProfile(){
-  const name=$('m-name')?.value.trim();
-  if(!name){toast('Nome vuoto!','var(--red)');return;}
-  G.name=name;G.avatar=modalAvatar||G.avatar;
-  localStorage.setItem('bc_name',G.name);localStorage.setItem('bc_avatar',G.avatar);
+  const n=$('m-name')?.value.trim();if(!n){toast('Nome vuoto!','var(--red)');return;}
+  G.name=n;G.avatar=mAv||G.avatar;
+  localStorage.setItem('at_name',G.name);localStorage.setItem('at_av',G.avatar);
   wsend({type:'set_profile',name:G.name,avatar:G.avatar});
-  updateHomeProfile();closeModal();toast('Profilo salvato! ✅','var(--green)');
+  updHomeProfile();closeModal();toast('Salvato! ✅','var(--green)');
 }
 
-// ── BOOT ─────────────────────────────────────────────────
-function avviaGioco() {
-  // Legge dati salvati
-  const onboarded = localStorage.getItem('bc_onboarded');
-  if (onboarded) {
-    G.name   = localStorage.getItem('bc_name')   || G.name;
-    G.avatar = localStorage.getItem('bc_avatar') || G.avatar;
-    showScreen('home');
-    updateHomeProfile();
-  } else {
-    const ni = $('name-input');
-    if (ni) ni.value = 'Trader' + (Math.random()*9000+1000|0);
-    showScreen('onboard');
-  }
-  // Init
-  initChart();
-  renderTradeChips();
-  updateTradeSummary();
-  // Connetti WS
-  connectWS();
-  // Tenta join lobby ogni 800ms finché WS è aperto
-  let t = 0;
-  const tryJoin = () => {
-    if (G.ws && G.ws.readyState === WebSocket.OPEN) {
-      wsend({ type:'join_public' });
-    } else if (++t < 15) {
-      setTimeout(tryJoin, 800);
+// ── Service Worker ────────────────────────────────────────
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').catch(()=>{});
+}
+
+// ══════════════════════════════════════════════════════════
+//  BOOT — eseguito SUBITO, senza aspettare nessun evento
+//  La barra CSS dura 1.8s → dopo 2s mostriamo la schermata
+// ══════════════════════════════════════════════════════════
+(function boot(){
+  // Avvia animazione barra splash
+  requestAnimationFrame(()=>{
+    const bar = $('splash-bar');
+    if(bar) bar.style.width = '100%';
+  });
+
+  // Dopo 2 secondi mostra la schermata giusta
+  setTimeout(function go(){
+    const onboarded = localStorage.getItem('at_ok');
+    if(onboarded){
+      G.name   = localStorage.getItem('at_name')  || G.name;
+      G.avatar = localStorage.getItem('at_av')    || G.avatar;
+      showScreen('home');
+      updHomeProfile();
+    } else {
+      $('ob-name').value = 'Trader'+(Math.random()*9000+1000|0);
+      showScreen('onboard');
     }
-  };
-  setTimeout(tryJoin, 1200);
-}
-
-// Splash dura esattamente 2000ms (sincronizzato con la barra CSS 1.8s)
-// Usiamo un flag per non avviare due volte
-let _booted = false;
-function boot() {
-  if (_booted) return;
-  _booted = true;
-  setTimeout(avviaGioco, 2000);
-}
-
-// Triggera in tutti i casi possibili
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-  boot(); // DOM già pronto (caso Railway/CDN)
-} else {
-  document.addEventListener('DOMContentLoaded', boot);
-}
-window.addEventListener('load', boot);
-// Fallback assoluto: se dopo 3s siamo ancora sullo splash, partiamo comunque
-setTimeout(() => {
-  if (!_booted) { boot(); }
-  // Se siamo ancora su splash dopo 3.5s, forziamo avviaGioco direttamente
-  setTimeout(() => {
-    if (G.screen === 'splash') avviaGioco();
-  }, 500);
-}, 3000);
-
-// Install PWA prompt
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  // Mostra banner dopo 5 secondi
-  setTimeout(() => {
-    if (deferredPrompt && G.screen==='home') {
-      toast('💡 Installa l\'app! Tocca ⋮ → "Aggiungi alla schermata home"','var(--blue)');
-    }
-  }, 5000);
-});
-window.addEventListener('appinstalled', () => {
-  toast('🎉 AquaTrade installata!','var(--green)');
-  deferredPrompt = null;
-});
+    // Init
+    initCV();
+    renderTradeChips();
+    updSumm();
+    updChartHdr();
+    // Connetti WS
+    connectWS();
+    // Join lobby appena WS aperto
+    let tries=0;
+    (function tryJoin(){
+      if(G.ws&&G.ws.readyState===WebSocket.OPEN){
+        wsend({type:'join_public'});
+      } else if(++tries<20){
+        setTimeout(tryJoin,500);
+      }
+    })();
+  }, 2000);
+})();
+// ══════════════════════════════════════════════════════════
 </script>
 </body>
 </html>
