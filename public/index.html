@@ -367,6 +367,139 @@ button{cursor:pointer}button:active{opacity:.8}canvas{display:block}
 .n-t{font-weight:700;margin-bottom:1px;font-family:var(--mono)}
 .n-b{color:var(--text2);font-size:10px}
 @keyframes nin{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE MOBILE — Samsung A54 e schermi <768px
+═══════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+
+  /* Nasconde elementi desktop */
+  #tstrip { display: none; }
+  .tb-brand { display: none; }
+  .tb-mid { display: none; }
+  .tb-right .pill:not(#tb-timer):not(.teal) { display: none; }
+  #ind-bar { display: none; }
+  #cb { display: none; }
+
+  /* Topbar mobile: compact */
+  #topbar {
+    height: 46px;
+    padding: 0 10px;
+    justify-content: space-between;
+  }
+  .tb-right {
+    border: none;
+    margin-left: 0;
+    padding: 0;
+    gap: 6px;
+    flex: 1;
+    justify-content: space-between;
+  }
+  .m-logo { display: flex !important; align-items: center; gap: 6px; font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--teal); }
+  .m-wallet { display: flex !important; flex-direction: column; align-items: flex-end; }
+  .m-wallet-v { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--gold); }
+  .m-wallet-p { font-family: var(--mono); font-size: 10px; }
+
+  /* Grid: colonna singola — mostra solo sezione attiva */
+  #grid {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: unset;
+  }
+
+  /* Tutti i pannelli nascosti di default su mobile */
+  #wl, #ca, #rp { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+
+  /* Pannello attivo */
+  #wl.m-active, #ca.m-active, #rp.m-active { display: flex; }
+
+  /* Chart area mobile: rimuove border */
+  #ca { border: none; }
+
+  /* Watchlist mobile: full height */
+  #wl { border: none; }
+  .wl-items { max-height: unset; }
+
+  /* Chart header mobile: compatto */
+  #ch-hdr {
+    padding: 6px 10px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .ch-sym { font-size: 14px; }
+  .ch-price { font-size: 20px; }
+  .ch-chg { font-size: 10px; }
+  .ch-stats { gap: 8px; flex-wrap: wrap; }
+  .chs-v { font-size: 10px; }
+  .ch-tools { flex-wrap: wrap; gap: 2px; }
+  .chtb { padding: 2px 6px; font-size: 9px; }
+  .ch-chip { display: none; }
+
+  /* Right panel mobile: full height */
+  #rp { border: none; }
+  .rp-tabs { display: none; } /* navigazione via bottom nav */
+
+  /* Bottom nav mobile */
+  #m-nav {
+    display: flex !important;
+    position: fixed;
+    bottom: 0;
+    left: 0; right: 0;
+    height: calc(52px + var(--sab));
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    z-index: 200;
+    align-items: flex-start;
+    padding-top: 6px;
+    padding-bottom: var(--sab);
+  }
+  .mn-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: none;
+    border: none;
+    color: var(--text3);
+    font-size: 9px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    padding: 0 2px;
+    cursor: pointer;
+    transition: color .15s;
+    height: 46px;
+  }
+  .mn-btn .mn-ic { font-size: 18px; line-height: 1; }
+  .mn-btn.on { color: var(--teal); }
+
+  /* Aggiunge padding bottom per non finire sotto la nav */
+  #terminal { padding-bottom: calc(52px + var(--sab)); }
+
+  /* Watchlist footer: compatta */
+  .wl-foot { padding: 8px 10px; }
+  .wl-fv { font-size: 13px; }
+
+  /* Overlay room e results: full screen */
+  #room-ov, #res-ov { padding: 0; }
+  .res-card { border-radius: 0; max-width: 100%; height: 100%; overflow-y: auto; }
+
+  /* Modal: full width */
+  .modal-sh { max-width: 100%; }
+
+  /* Right panel panels: scroll corretto */
+  #pnl-trade, #pnl-analytics, #pnl-pos, #pnl-rank, #pnl-chat { display: flex; flex-direction: column; flex: 1; }
+
+  /* Timer e online pill nella topbar mobile */
+  .pill.teal { font-size: 10px; padding: 3px 7px; }
+  #tb-timer { font-size: 10px; }
+}
+
+/* Elementi mobile-only nascosti su desktop */
+.m-logo { display: none; }
+.m-wallet { display: none; }
+#m-nav { display: none; }
 </style>
 </head>
 <body>
@@ -402,6 +535,8 @@ button{cursor:pointer}button:active{opacity:.8}canvas{display:block}
   <div id="tstrip"></div>
   <div id="topbar">
     <div class="tb-brand"><div><div class="tb-bname">💧 AQUATRADE</div><div class="tb-bver">TERMINAL v1</div></div></div>
+    <!-- Mobile logo -->
+    <div class="m-logo" onclick="mNav('chart')">💧 AquaTrade</div>
     <div class="tb-mid">
       <div class="tb-s"><div class="tb-sl">Wallet</div><div class="tb-sv gold" id="tb-w">50,000 BEE</div></div>
       <div class="tb-s"><div class="tb-sl">P&L</div><div class="tb-sv up" id="tb-pnl">+0</div></div>
@@ -414,6 +549,8 @@ button{cursor:pointer}button:active{opacity:.8}canvas{display:block}
       <div class="pill" onclick="openModal('create')">⚔️ Torneo</div>
       <div class="pill" onclick="openModal('join')">🔑 Join</div>
       <div class="pill gold" id="tb-timer" style="display:none">⏱ --:--</div>
+      <!-- Mobile wallet -->
+      <div class="m-wallet"><div class="m-wallet-v" id="m-w">50,000</div><div class="m-wallet-p up" id="m-pnl">+0</div></div>
     </div>
   </div>
   <div id="grid">
@@ -487,6 +624,14 @@ button{cursor:pointer}button:active{opacity:.8}canvas{display:block}
         <div id="pnl-chat" class="rp-panel"></div>
       </div>
     </div>
+    <!-- BOTTOM NAV MOBILE -->
+  <div id="m-nav">
+    <button class="mn-btn on" id="mn-chart" onclick="mNav('chart')"><div class="mn-ic">📈</div>Chart</button>
+    <button class="mn-btn" id="mn-market" onclick="mNav('market')"><div class="mn-ic">💧</div>Market</button>
+    <button class="mn-btn" id="mn-trade" onclick="mNav('trade')"><div class="mn-ic">💱</div>Trade</button>
+    <button class="mn-btn" id="mn-pos" onclick="mNav('pos')"><div class="mn-ic">📋</div>Pos</button>
+    <button class="mn-btn" id="mn-rank" onclick="mNav('rank')"><div class="mn-ic">👥</div>Rank</button>
+    <button class="mn-btn" id="mn-chat" onclick="mNav('chat')"><div class="mn-ic">💬</div>Chat</button>
   </div>
 </div>
 
@@ -640,6 +785,10 @@ function updTopbar(){
   $('wl-tot').textContent=fmt(total|0)+' BEE';
   const pnl=Object.entries(G.portfolio).reduce((a,[k,v])=>a+(G.prices[k]-v.avg)*v.qty,0);
   const pe2=$('wl-pnl');pe2.textContent='P&L: '+fmtP(pnl|0);pe2.style.color=clr(pnl);
+  // Aggiorna wallet mobile
+  const mw=$('m-w');const mp=$('m-pnl');
+  if(mw)mw.textContent=fmt(total|0);
+  if(mp){mp.textContent=fmtP(dp|0);mp.className='m-wallet-p '+(dp>=0?'up':'dn');}
 }
 
 function renderTickerStrip(){
@@ -845,7 +994,49 @@ let selAv2=localStorage.getItem('at_av')||'💧';
 function selAv(btn,av){document.querySelectorAll('#av-grid .av-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');selAv2=av;}
 function finishOnboard(){const n=$('ob-name')?.value.trim();if(!n){toast('Inserisci un nome!','var(--red)');return;}G.name=n;G.avatar=selAv2;localStorage.setItem('at_name',G.name);localStorage.setItem('at_av',G.avatar);localStorage.setItem('at_ok','1');wsend({type:'set_profile',name:G.name,avatar:G.avatar});wsend({type:'join_public'});$('ob-screen').style.display='none';$('terminal').classList.add('on');renderAll();}
 
-function renderAll(){renderTickerStrip();renderWL();updChartHdr();drawChart();renderCBT();updTopbar();renderTrade();}
+function renderAll(){renderTickerStrip();renderWL();updChartHdr();drawChart();renderCBT();updTopbar();renderTrade();
+  // Imposta vista mobile iniziale
+  if(window.innerWidth<768) mNav('chart');
+}
+
+// ── Mobile Navigation ──────────────────────────────────
+let curMNav = 'chart';
+function mNav(section) {
+  if(window.innerWidth >= 768) return; // solo su mobile
+  curMNav = section;
+  // Nasconde tutti i pannelli
+  ['wl','ca','rp'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.classList.remove('m-active');
+  });
+  // Aggiorna bottoni nav
+  ['chart','market','trade','pos','rank','chat'].forEach(s => {
+    const b = document.getElementById('mn-'+s);
+    if(b) b.classList.toggle('on', s === section);
+  });
+  // Mostra il pannello giusto e imposta la tab destra
+  if(section === 'chart' || section === 'market') {
+    // Chart area
+    const ca = document.getElementById('ca');
+    if(ca) ca.classList.add('m-active');
+    if(section === 'market') {
+      // Dentro chart area, mostra watchlist separata
+      const ca2 = document.getElementById('ca');
+      if(ca2) ca2.classList.remove('m-active');
+      const wl = document.getElementById('wl');
+      if(wl) wl.classList.add('m-active');
+    } else {
+      resizeChart(); drawChart();
+    }
+  } else {
+    // Right panel
+    const rp = document.getElementById('rp');
+    if(rp) rp.classList.add('m-active');
+    // Switcha tab interno
+    const tabMap = {trade:'trade', pos:'pos', rank:'rank', chat:'chat'};
+    if(tabMap[section]) setRT(tabMap[section]);
+  }
+}
 
 if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
 
